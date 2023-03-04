@@ -4,7 +4,7 @@ cradle:
       component: "hangman:lib"
 
     - path: "hangman/test"
-      component: "hangman:test:hangman-test"
+      component: "hangman:test:unit"
 
     - path: "hangman-server/src"
       component: "hangman-server:lib"
