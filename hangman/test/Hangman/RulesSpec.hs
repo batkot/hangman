@@ -69,9 +69,9 @@ canMakeSomeMistakesAndStillWin RunningGameData{..} infiniteChars =
     guesses = concat . transpose $ [wrongGuesses, goodGuesses]
     result = foldrM guessLetter game $ guesses ++ [lastGuess]
 
-data GameKind = Any | AtLeast2DifferentLetters
+data PuzzleKind = Any | AtLeast2DifferentLetters
 
-data RunningGameData (state :: GameKind) = RunningGameData
+data RunningGameData (state :: PuzzleKind) = RunningGameData
     { game :: RunningGame
     , puzzle :: NonEmpty Char
     }
