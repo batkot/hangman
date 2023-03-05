@@ -21,6 +21,7 @@ description:         Please see the README on GitHub at <https://github.com/batk
 
 dependencies:
 - base >= 4.7 && < 5
+- either
 
 ghc-options:
 - -Wall
@@ -52,4 +53,5 @@ tests:
     - tasty-discover
     - tasty-quickcheck
     - tasty-hunit
+    - extra
 

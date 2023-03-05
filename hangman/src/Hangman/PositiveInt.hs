@@ -9,9 +9,11 @@ module Hangman.PositiveInt
 
     , one
     , increment
+    , decrement
     , add
     , toInt
     ) where
+import Data.Either.Combinators (rightToMaybe)
 
 newtype PositiveInt =
     MkPositiveInt { unPositiveInt :: Int }
@@ -34,6 +36,9 @@ add (MkPositiveInt x) (MkPositiveInt y) = MkPositiveInt $ x + y
 
 increment :: PositiveInt -> PositiveInt
 increment = add one
+
+decrement :: PositiveInt -> Maybe PositiveInt
+decrement (MkPositiveInt x) = rightToMaybe . createPositiveInt $ x - 1
 
 toInt :: PositiveInt -> Int
 toInt = unPositiveInt
