@@ -22,6 +22,10 @@ description:         Please see the README on GitHub at <https://github.com/batk
 dependencies:
 - base >= 4.7 && < 5
 - hangman
+- servant-server
+- servant-swagger
+- servant-swagger-ui
+- text
 
 ghc-options:
 - -Wall
@@ -47,6 +51,8 @@ executables:
     - -with-rtsopts=-N
     dependencies:
     - hangman-server
+    - optparse-applicative
+    - warp
 
 tests:
   hangman-server-test:

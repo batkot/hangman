@@ -3,15 +3,14 @@
 {-# LANGUAGE GeneralizedNewtypeDeriving #-}
 
 module Hangman.Rules
-    ( someFunc2
-    , guessLetter
+    ( guessLetter
     , createNewGame
     , RunningGame
     , FinishedGame(..)
     , getLeftChances
     ) where
 
-import Data.List.NonEmpty
+import Data.List.NonEmpty (NonEmpty, toList, intersperse)
 import GHC.Unicode (toUpper)
 import Hangman.PositiveInt (PositiveInt, decrement)
 import Control.Monad (join)
@@ -69,6 +68,3 @@ guessLetter x RunningGame{..}
     newPuzzle = Puzzle $ guess (toUpper x) <$> unPuzzle puzzle
     newChances = if newPuzzle == puzzle then decrement chances else Just chances
     newGame = RunningGame newPuzzle <$> newChances
-
-someFunc2 :: String
-someFunc2 = "Hello from Hangman Lib"

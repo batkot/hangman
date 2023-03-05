@@ -34,6 +34,10 @@ library
   build-depends:
       base >=4.7 && <5
     , hangman
+    , servant-server
+    , servant-swagger
+    , servant-swagger-ui
+    , text
   default-language: Haskell2010
 
 executable hangman-server-exe
@@ -47,6 +51,12 @@ executable hangman-server-exe
       base >=4.7 && <5
     , hangman
     , hangman-server
+    , optparse-applicative
+    , servant-server
+    , servant-swagger
+    , servant-swagger-ui
+    , text
+    , warp
   default-language: Haskell2010
 
 test-suite hangman-server-test
@@ -61,4 +71,8 @@ test-suite hangman-server-test
       base >=4.7 && <5
     , hangman
     , hangman-server
+    , servant-server
+    , servant-swagger
+    , servant-swagger-ui
+    , text
   default-language: Haskell2010

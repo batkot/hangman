@@ -1,6 +1,23 @@
 module Main (main) where
 
-import Hangman.Server
+import Hangman.Server (application)
+
+import Network.Wai.Handler.Warp (run)
+import Options.Applicative (Parser, long, short, metavar, help, option, auto, (<**>), info, helper, fullDesc, progDesc, execParser)
+
+data Options = Options
+    { port :: Int
+    }
+
+optionParser :: Parser Options
+optionParser = Options
+    <$> option auto (long "port" <> short 'p' <> metavar "INT" <> help "Port to run http server")
 
 main :: IO ()
-main = someFunc
+main = do
+    opt <- execParser options
+    putStrLn $ "Starting on port " <> show (port opt)
+    run (port opt) application
+  where
+    options = info (optionParser <**> helper)
+        (fullDesc <> progDesc "Run Foo Server")
