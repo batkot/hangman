@@ -15,5 +15,5 @@ cradle:
     - path: "hangman-server/app/Paths_hangman_server.hs"
       component: "hangman-server:exe:hangman-server-exe"
 
-    - path: "hangman-server/test"
-      component: "hangman-server:test:hangman-server-test"
+    - path: "hangman-server/test/e2e"
+      component: "hangman-server:test:e2e"

@@ -5,6 +5,8 @@
 
 module Hangman.Server
     ( application
+    , Api
+    , ServerApi
     ) where
 
 import Data.Proxy (Proxy(..))
@@ -16,7 +18,11 @@ import Servant.Swagger.UI (SwaggerSchemaUI, swaggerSchemaUIServer)
 
 cat :: Text
 cat =
-  intercalate "\n" [ " _._     _,-'\"\"`-._", "(,-.`._,'(       |\\`-/|", "    `-.-' \\ )-`( , o o)", "          `-    \\`_`\"'-" ]
+  intercalate "\n"
+      [ " _._     _,-'\"\"`-._"
+      , "(,-.`._,'(       |\\`-/|"
+      , "    `-.-' \\ )-`( , o o)"
+      , "          `-    \\`_`\"'-" ]
 
 type Api = Get '[PlainText] Text
 

@@ -55,12 +55,20 @@ executables:
     - warp
 
 tests:
-  hangman-server-test:
+  e2e:
     main:                Spec.hs
-    source-dirs:         test
+    source-dirs:         test/e2e
     ghc-options:
     - -threaded
     - -rtsopts
     - -with-rtsopts=-N
     dependencies:
     - hangman-server
+    - warp
+    - servant-client
+    - http-client
+    - QuickCheck
+    - HUnit
+    - tasty
+    - tasty-quickcheck
+    - tasty-hunit
