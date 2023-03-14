@@ -4,6 +4,7 @@
 {-# LANGUAGE KindSignatures #-}
 {-# LANGUAGE FlexibleInstances #-}
 {-# LANGUAGE NoImplicitPrelude #-}
+{-# LANGUAGE GADTs #-}
 
 module Hangman.Model.GameSpec
     ( test_rules
@@ -18,7 +19,7 @@ import Data.List.NonEmpty.Extra (nubOrdOn)
 import Hangman.Model.Game
 import Hangman.Model.PositiveInt
 import Hangman.Model.PositiveInt.Arbitrary ()
-import Data.Foldable (foldrM)
+import Data.Foldable (foldl')
 import Test.Tasty.QuickCheck (testProperty)
 import Test.QuickCheck (Arbitrary(..), InfiniteList(..), suchThat)
 import GHC.Unicode (toUpper)
@@ -31,62 +32,73 @@ test_rules = testGroup "Hangman.Rules tests"
     , testProperty "Can make N - 1 mistakes and still win" canMakeSomeMistakesAndStillWin
     ]
 
-getWrongChars :: InfiniteList Char -> NonEmpty Char -> [Char]
-getWrongChars infiniteChars puzzle = wrongChars
+runGame :: Foldable f => Game 'Running -> f Char -> AnyGame
+runGame game = foldl' step (AnyGame game)
   where
-    puzzleChars = toUpper <$> nubOrdOn toUpper puzzle
+    step :: AnyGame -> Char -> AnyGame
+    step (AnyGame (RunningGame a b c)) guess = guessLetter guess $ RunningGame a b c
+    step x _ = x
+
+getWrongChars :: InfiniteList Char -> Solution -> [Char]
+getWrongChars infiniteChars (Solution solution) = wrongChars
+  where
+    puzzleChars = toUpper <$> nubOrdOn toUpper solution
     wrongChars = filter ((`notElem` puzzleChars) . toUpper) . getInfiniteList $ infiniteChars
 
 guessingAllPuzzleCharsSolvesThePuzzle :: RunningGameData 'Any -> Bool
 guessingAllPuzzleCharsSolvesThePuzzle RunningGameData{..} =
-    result == Left Victory
+    isWon result
   where
-    guesses = nubOrdOn toUpper puzzle
-    result = foldrM guessLetter game guesses
+    guesses = nubOrdOn toUpper $ unSolution solution
+    result = runGame game guesses
 
 guessingWrongCharNTimesLosesTheGame :: RunningGameData 'Any -> InfiniteList Char -> Bool
 guessingWrongCharNTimesLosesTheGame RunningGameData{..} infiniteChars =
-   result == Left Failure
+   isLost result
   where
     chances = toInt . getLeftChances $ game
-    result = foldrM guessLetter game $ take chances $ getWrongChars infiniteChars puzzle
+    result = runGame game $ take chances $ getWrongChars infiniteChars solution
 
 guessingGuessedLetterDecreasesScore :: RunningGameData 'AtLeast2DifferentLetters -> Bool
 guessingGuessedLetterDecreasesScore RunningGameData{..} =
-    result == Left Failure
+    isLost result
   where
-    existingChar = head puzzle
+    existingChar = head . unSolution $ solution
     chances = toInt . getLeftChances $ game
-    result = foldrM guessLetter game $ replicate (chances + 1) existingChar
+    result = runGame game $ replicate (chances + 1) existingChar
 
 canMakeSomeMistakesAndStillWin :: RunningGameData 'Any -> InfiniteList Char -> Bool
 canMakeSomeMistakesAndStillWin RunningGameData{..} infiniteChars =
-    result == Left Victory
+    isWon result
   where
     chances = toInt . getLeftChances $ game
-    wrongGuesses = take (chances - 1) $ getWrongChars infiniteChars puzzle
-    (lastGuess :| goodGuesses) = nubOrdOn toUpper puzzle
+    wrongGuesses = take (chances - 1) $ getWrongChars infiniteChars solution
+    (lastGuess :| goodGuesses) = nubOrdOn toUpper $ unSolution solution
     guesses = concat . transpose $ [wrongGuesses, goodGuesses]
-    result = foldrM guessLetter game $ guesses ++ [lastGuess]
+    result = runGame game $ guesses ++ [lastGuess]
 
 data PuzzleKind = Any | AtLeast2DifferentLetters
 
 data RunningGameData (state :: PuzzleKind) = RunningGameData
-    { game :: RunningGame
-    , puzzle :: NonEmpty Char
+    { game :: Game 'Running
+    , solution :: Solution
     }
     deriving stock (Eq, Show)
 
 instance Arbitrary (RunningGameData 'Any) where
     arbitrary = do
+        gameId <- GameId <$> arbitrary
         puzzle <- (:|) <$> arbitrary <*> arbitrary
+        let solution = Solution puzzle
         chances <- arbitrary
-        let game = createNewGame puzzle chances
-        return (RunningGameData game puzzle)
+        let game = createNewGame gameId solution chances
+        return (RunningGameData game solution)
 
 instance Arbitrary (RunningGameData 'AtLeast2DifferentLetters) where
     arbitrary = do
+        gameId <- GameId <$> arbitrary
         puzzle <- (`suchThat` ((<) 1 . length . nubOrdOn toUpper)) $ (:|) <$> arbitrary <*> arbitrary
         chances <- arbitrary
-        let game = createNewGame puzzle chances
-        return (RunningGameData game puzzle)
+        let solution = Solution puzzle
+        let game = createNewGame gameId solution chances
+        return (RunningGameData game solution)

@@ -1,6 +1,6 @@
 {-# LANGUAGE DerivingStrategies #-}
-{-# LANGUAGE RecordWildCards #-}
 {-# LANGUAGE GeneralizedNewtypeDeriving #-}
+{-# LANGUAGE StandaloneDeriving #-}
 {-# LANGUAGE DataKinds #-}
 {-# LANGUAGE GADTs #-}
 {-# LANGUAGE KindSignatures #-}
@@ -8,9 +8,15 @@
 module Hangman.Model.Game
     ( guessLetter
     , createNewGame
-    , RunningGame
-    , FinishedGame(..)
+    , Solution(..)
+    , Game(..)
+    , GameState(..)
+    , GameId(..)
+    , GameRepository(..)
+    , AnyGame(..)
     , getLeftChances
+    , isWon
+    , isLost
     ) where
 
 import Control.Monad (join)
@@ -33,8 +39,10 @@ guess x (Hidden y)
     | otherwise = Hidden y
 guess _ x = x
 
-newtype Puzzle = Puzzle { unPuzzle :: NonEmpty PuzzleLetter } deriving newtype Eq
+newtype Solution = Solution { unSolution :: NonEmpty Char } deriving newtype (Eq, Show)
+type Chances = PositiveInt
 
+newtype Puzzle = Puzzle { unPuzzle :: NonEmpty PuzzleLetter } deriving newtype Eq
 instance Show Puzzle where
   show (Puzzle x) = join $ toList $ intersperse " " $ fmap show x
 
@@ -44,46 +52,47 @@ isSolved = all isGuessed . unPuzzle
     isGuessed (Guessed _) = True
     isGuessed _ = False
 
-data RunningGame = RunningGame
-    { puzzle :: Puzzle
-    , chances :: PositiveInt
-    }
-    deriving stock (Eq, Show)
+getLeftChances :: Game 'Running -> Chances
+getLeftChances (RunningGame _ _ chances) = chances
 
-getLeftChances :: RunningGame -> PositiveInt
-getLeftChances = chances
-
-data FinishedGame
-    = Victory
-    | Failure
-    deriving stock (Eq, Show)
-
-data GameState = Running | Finished
+data GameState = Running | Lost | Won
 
 newtype GameId = GameId { unGameId :: String }
     deriving newtype Eq
     deriving stock Show
 
 data Game (state :: GameState) where
-    RunningGame' :: GameId -> Puzzle -> PositiveInt -> Game 'Running
-    FinishedGame' :: GameId -> Puzzle -> Game 'Finished
+    RunningGame :: GameId -> Puzzle -> PositiveInt -> Game 'Running
+    LostGame :: GameId -> Puzzle -> Game 'Lost
+    WonGame :: GameId -> Puzzle -> Game 'Won
 
-data AnyGame = forall state. AnyGame (Game state)
+deriving instance Eq (Game state)
+deriving instance Show (Game state)
+
+data AnyGame = forall (state :: GameState). AnyGame (Game state)
+
+isWon :: AnyGame -> Bool
+isWon (AnyGame (WonGame _ _)) = True
+isWon _ = False
+
+isLost :: AnyGame -> Bool
+isLost (AnyGame (LostGame _ _)) = True
+isLost _ = False
 
 class Monad m => GameRepository m where
     findGame :: GameId -> m (Maybe (Game 'Running))
-    saveGame :: m AnyGame
+    saveGame :: AnyGame -> m ()
 
-createNewGame :: NonEmpty Char -> PositiveInt -> RunningGame
-createNewGame word = RunningGame gamePuzzle
+createNewGame :: GameId -> Solution -> Chances -> Game 'Running
+createNewGame gameId (Solution solution) = RunningGame gameId gamePuzzle
   where
-    gamePuzzle = Puzzle $ Hidden . toUpper <$> word
+    gamePuzzle = Puzzle $ Hidden . toUpper <$> solution
 
-guessLetter :: Char -> RunningGame -> Either FinishedGame RunningGame
-guessLetter x RunningGame{..}
-    | isSolved newPuzzle = Left Victory
-    | otherwise = maybe (Left Failure) Right newGame
+guessLetter :: Char -> Game 'Running -> AnyGame
+guessLetter x (RunningGame gameId puzzle chances)
+    | isSolved newPuzzle = AnyGame (WonGame gameId newPuzzle)
+    | otherwise = maybe (AnyGame (LostGame gameId newPuzzle)) AnyGame newGame
   where
     newPuzzle = Puzzle $ guess (toUpper x) <$> unPuzzle puzzle
     newChances = if newPuzzle == puzzle then decrement chances else Just chances
-    newGame = RunningGame newPuzzle <$> newChances
+    newGame = RunningGame gameId newPuzzle <$> newChances

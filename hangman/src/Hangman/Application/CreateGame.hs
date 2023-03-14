@@ -1,4 +1,5 @@
 {-# LANGUAGE RecordWildCards #-}
+{-# LANGUAGE DataKinds #-}
 
 module Hangman.Application.CreateGame
     ( Command(..)
@@ -7,34 +8,31 @@ module Hangman.Application.CreateGame
 
 import Data.List.NonEmpty (NonEmpty)
 import Hangman.Model.PositiveInt (PositiveInt)
-import Hangman.Model.Game (createNewGame, RunningGame)
+import Hangman.Model.Game (createNewGame, GameId(..), GameRepository(..), Solution(..), AnyGame(..))
 
 data Command = Command
-    { puzzle :: NonEmpty Char
+    { gameId :: GameId
+    , puzzle :: NonEmpty Char
     , chances :: PositiveInt
     }
 
-newtype GameId = GameId { getId :: String }
-
-class Monad m => SaveGameMonad m where
-    saveGame :: RunningGame -> m GameId
-
 createGame
-    :: SaveGameMonad m
+    :: GameRepository m
     => Command
-    -> m GameId
+    -> m ()
 createGame Command{..} =
-    saveGame $ createNewGame puzzle chances
+    saveGame . AnyGame $ createNewGame gameId (Solution puzzle) chances
 
 class Monad m => GeneratePuzzleMonad m where
     generatePuzzle :: m (NonEmpty Char)
 
 createRandomGame
     :: GeneratePuzzleMonad m
-    => SaveGameMonad m
+    => GameRepository m
     => PositiveInt
-    -> m GameId
-createRandomGame chances = do
+    -> GameId
+    -> m ()
+createRandomGame chances gameId = do
     puzzle <- generatePuzzle
     createGame $ Command {..}
 
