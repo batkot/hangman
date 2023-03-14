@@ -2,7 +2,7 @@
 {-# LANGUAGE DerivingStrategies #-}
 {-# LANGUAGE GeneralizedNewtypeDeriving #-}
 
-module Hangman.PositiveInt
+module Hangman.Model.PositiveInt
     ( createPositiveInt
     , PositiveInt
     , pattern PositiveInt

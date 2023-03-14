@@ -25,8 +25,9 @@ source-repository head
 
 library
   exposed-modules:
-      Hangman.PositiveInt
-      Hangman.Rules
+      Hangman.Application.CreateGame
+      Hangman.Model.Game
+      Hangman.Model.PositiveInt
   other-modules:
       Paths_hangman
   hs-source-dirs:
@@ -41,9 +42,9 @@ test-suite unit
   type: exitcode-stdio-1.0
   main-is: Spec.hs
   other-modules:
-      Hangman.PositiveInt.Arbitrary
-      Hangman.PositiveInt.Spec
-      Hangman.RulesSpec
+      Hangman.Model.GameSpec
+      Hangman.Model.PositiveInt.Arbitrary
+      Hangman.Model.PositiveInt.Spec
       Paths_hangman
   hs-source-dirs:
       test

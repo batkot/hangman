@@ -1,3 +1,4 @@
+{-# LANGUAGE RecordWildCards #-}
 module Hangman.Server.GetSpec
     ( tests
     ) where
@@ -12,7 +13,7 @@ tests :: IO WebClient -> TestTree
 tests webClientM =
     testGroup "GET / tests"
         [ testCase "Should return cat" $ do
-            webClient <- webClientM
-            response <- runClientM (get webClient) (env webClient)
+            WebClient{..} <- webClientM
+            response <- runClientM get env
             isRight response @? "Should get result"
         ]

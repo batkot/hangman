@@ -1,8 +1,11 @@
 {-# LANGUAGE DerivingStrategies #-}
 {-# LANGUAGE RecordWildCards #-}
 {-# LANGUAGE GeneralizedNewtypeDeriving #-}
+{-# LANGUAGE DataKinds #-}
+{-# LANGUAGE GADTs #-}
+{-# LANGUAGE KindSignatures #-}
 
-module Hangman.Rules
+module Hangman.Model.Game
     ( guessLetter
     , createNewGame
     , RunningGame
@@ -10,10 +13,10 @@ module Hangman.Rules
     , getLeftChances
     ) where
 
+import Control.Monad (join)
 import Data.List.NonEmpty (NonEmpty, toList, intersperse)
 import GHC.Unicode (toUpper)
-import Hangman.PositiveInt (PositiveInt, decrement)
-import Control.Monad (join)
+import Hangman.Model.PositiveInt (PositiveInt, decrement)
 
 data PuzzleLetter
     = Hidden Char
@@ -21,7 +24,7 @@ data PuzzleLetter
     deriving stock Eq
 
 instance Show PuzzleLetter where
-  show (Hidden x) = '|' : x : "|"
+  show (Hidden x) = ['|', x, '|']
   show (Guessed x) = [x]
 
 guess :: Char -> PuzzleLetter -> PuzzleLetter
@@ -54,6 +57,22 @@ data FinishedGame
     = Victory
     | Failure
     deriving stock (Eq, Show)
+
+data GameState = Running | Finished
+
+newtype GameId = GameId { unGameId :: String }
+    deriving newtype Eq
+    deriving stock Show
+
+data Game (state :: GameState) where
+    RunningGame' :: GameId -> Puzzle -> PositiveInt -> Game 'Running
+    FinishedGame' :: GameId -> Puzzle -> Game 'Finished
+
+data AnyGame = forall state. AnyGame (Game state)
+
+class Monad m => GameRepository m where
+    findGame :: GameId -> m (Maybe (Game 'Running))
+    saveGame :: m AnyGame
 
 createNewGame :: NonEmpty Char -> PositiveInt -> RunningGame
 createNewGame word = RunningGame gamePuzzle

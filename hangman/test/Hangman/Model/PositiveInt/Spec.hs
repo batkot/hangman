@@ -1,4 +1,4 @@
-module Hangman.PositiveInt.Spec
+module Hangman.Model.PositiveInt.Spec
     ( test_positiveInt
     ) where
 
@@ -7,8 +7,8 @@ import Test.HUnit ((@?=))
 import Test.Tasty (TestTree, testGroup)
 import Test.Tasty.HUnit (testCase)
 import Test.Tasty.QuickCheck (testProperty)
-import Hangman.PositiveInt
-import Hangman.PositiveInt.Arbitrary ()
+import Hangman.Model.PositiveInt
+import Hangman.Model.PositiveInt.Arbitrary ()
 
 test_positiveInt :: TestTree
 test_positiveInt =

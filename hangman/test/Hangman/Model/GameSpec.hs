@@ -5,7 +5,7 @@
 {-# LANGUAGE FlexibleInstances #-}
 {-# LANGUAGE NoImplicitPrelude #-}
 
-module Hangman.RulesSpec
+module Hangman.Model.GameSpec
     ( test_rules
     ) where
 
@@ -15,12 +15,12 @@ import Test.Tasty (TestTree, testGroup)
 import Data.List (transpose)
 import Data.List.NonEmpty (NonEmpty ((:|)), head)
 import Data.List.NonEmpty.Extra (nubOrdOn)
-import Hangman.Rules
-import Hangman.PositiveInt
+import Hangman.Model.Game
+import Hangman.Model.PositiveInt
+import Hangman.Model.PositiveInt.Arbitrary ()
 import Data.Foldable (foldrM)
 import Test.Tasty.QuickCheck (testProperty)
 import Test.QuickCheck (Arbitrary(..), InfiniteList(..), suchThat)
-import Hangman.PositiveInt.Arbitrary ()
 import GHC.Unicode (toUpper)
 
 test_rules :: TestTree
