@@ -28,6 +28,7 @@ library
       Hangman.Application.CreateGame
       Hangman.Model.Game
       Hangman.Model.PositiveInt
+      Hangman.Model.Puzzle
   other-modules:
       Paths_hangman
   hs-source-dirs:
@@ -45,6 +46,8 @@ test-suite unit
       Hangman.Model.GameSpec
       Hangman.Model.PositiveInt.Arbitrary
       Hangman.Model.PositiveInt.Spec
+      Hangman.Model.Puzzle.Arbitrary
+      Hangman.Model.Puzzle.Spec
       Paths_hangman
   hs-source-dirs:
       test

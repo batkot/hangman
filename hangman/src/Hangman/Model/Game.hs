@@ -19,38 +19,14 @@ module Hangman.Model.Game
     , isLost
     ) where
 
-import Control.Monad (join)
-import Data.List.NonEmpty (NonEmpty, toList, intersperse)
-import GHC.Unicode (toUpper)
+import Data.List.NonEmpty (NonEmpty)
+
 import Hangman.Model.PositiveInt (PositiveInt, decrement)
-
-data PuzzleLetter
-    = Hidden Char
-    | Guessed Char
-    deriving stock Eq
-
-instance Show PuzzleLetter where
-  show (Hidden x) = ['|', x, '|']
-  show (Guessed x) = [x]
-
-guess :: Char -> PuzzleLetter -> PuzzleLetter
-guess x (Hidden y)
-    | x == y = Guessed y
-    | otherwise = Hidden y
-guess _ x = x
+import Hangman.Model.Puzzle (Puzzle, PuzzleState(..), createPuzzle)
+import qualified Hangman.Model.Puzzle as Puzzle (guessLetter)
 
 newtype Solution = Solution { unSolution :: NonEmpty Char } deriving newtype (Eq, Show)
 type Chances = PositiveInt
-
-newtype Puzzle = Puzzle { unPuzzle :: NonEmpty PuzzleLetter } deriving newtype Eq
-instance Show Puzzle where
-  show (Puzzle x) = join $ toList $ intersperse " " $ fmap show x
-
-isSolved :: Puzzle -> Bool
-isSolved = all isGuessed . unPuzzle
-  where
-    isGuessed (Guessed _) = True
-    isGuessed _ = False
 
 getLeftChances :: Game 'Running -> Chances
 getLeftChances (RunningGame _ _ chances) = chances
@@ -62,9 +38,9 @@ newtype GameId = GameId { unGameId :: String }
     deriving stock Show
 
 data Game (state :: GameState) where
-    RunningGame :: GameId -> Puzzle -> PositiveInt -> Game 'Running
-    LostGame :: GameId -> Puzzle -> Game 'Lost
-    WonGame :: GameId -> Puzzle -> Game 'Won
+    RunningGame :: GameId -> Puzzle 'Unsolved -> PositiveInt -> Game 'Running
+    LostGame :: GameId -> Puzzle 'Unsolved -> Game 'Lost
+    WonGame :: GameId -> Puzzle 'Solved -> Game 'Won
 
 deriving instance Eq (Game state)
 deriving instance Show (Game state)
@@ -86,13 +62,14 @@ class Monad m => GameRepository m where
 createNewGame :: GameId -> Solution -> Chances -> Game 'Running
 createNewGame gameId (Solution solution) = RunningGame gameId gamePuzzle
   where
-    gamePuzzle = Puzzle $ Hidden . toUpper <$> solution
+    gamePuzzle = createPuzzle solution
 
 guessLetter :: Char -> Game 'Running -> AnyGame
-guessLetter x (RunningGame gameId puzzle chances)
-    | isSolved newPuzzle = AnyGame (WonGame gameId newPuzzle)
-    | otherwise = maybe (AnyGame (LostGame gameId newPuzzle)) AnyGame newGame
+guessLetter x (RunningGame gameId puzzle chances) =
+    either gameWon gameOn $ Puzzle.guessLetter x puzzle
   where
-    newPuzzle = Puzzle $ guess (toUpper x) <$> unPuzzle puzzle
-    newChances = if newPuzzle == puzzle then decrement chances else Just chances
-    newGame = RunningGame gameId newPuzzle <$> newChances
+    gameWon solvedPuzzle = AnyGame $ WonGame gameId solvedPuzzle
+    gameOn newPuzzle = maybe (AnyGame (LostGame gameId newPuzzle)) AnyGame newGame
+      where
+        newChances = if newPuzzle == puzzle then decrement chances else Just chances
+        newGame = RunningGame gameId newPuzzle <$> newChances

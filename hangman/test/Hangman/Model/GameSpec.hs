@@ -25,7 +25,7 @@ import Test.QuickCheck (Arbitrary(..), InfiniteList(..), suchThat)
 import GHC.Unicode (toUpper)
 
 test_rules :: TestTree
-test_rules = testGroup "Hangman.Rules tests"
+test_rules = testGroup "Hangman.Model.Game tests"
     [ testProperty "Guessing all puzzle chars solves the puzzle" guessingAllPuzzleCharsSolvesThePuzzle
     , testProperty "Guessing wrong chars N times fails the game" guessingWrongCharNTimesLosesTheGame
     , testProperty "Guessing guessed letter decreases score" guessingGuessedLetterDecreasesScore

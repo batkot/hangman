@@ -12,7 +12,7 @@ import Hangman.Model.PositiveInt.Arbitrary ()
 
 test_positiveInt :: TestTree
 test_positiveInt =
-    testGroup "Hangman.PositiveInt tests"
+    testGroup "Hangman.Model.PositiveInt tests"
         [ testProperty "PositiveInt is always greater than 0" positiveIntIsAlwaysGreaterThanZero
         , testProperty "Adding PositiveInts is isomorphic to multiple increments" addPositiveIntegersIsMultipleIncrement
         , testProperty "Obligatory addition commutative property" addIsCommutative
