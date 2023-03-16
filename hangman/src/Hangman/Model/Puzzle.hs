@@ -1,6 +1,5 @@
 {-# LANGUAGE DataKinds #-}
 {-# LANGUAGE GADTs #-}
-{-# LANGUAGE PatternSynonyms #-}
 {-# LANGUAGE KindSignatures #-}
 {-# LANGUAGE DerivingStrategies #-}
 {-# LANGUAGE StandaloneDeriving #-}
@@ -11,8 +10,8 @@ module Hangman.Model.Puzzle
     , Solution
     , createPuzzle
     , guessLetter
-    , pattern SolvedPuzzle
     , getSolution
+    , describePuzzle
     ) where
 
 import Data.List.NonEmpty (NonEmpty)
@@ -41,30 +40,37 @@ letterToChar :: PuzzleLetter -> Char
 letterToChar (Hidden x) = x
 letterToChar (Guessed x) = x
 
+letterToMaybe :: PuzzleLetter -> Maybe Char
+letterToMaybe (Guessed x) = Just x
+letterToMaybe _ = Nothing
+
 type Solution = NonEmpty Char
 
 data PuzzleState = Unsolved | Solved
 
 data Puzzle (state :: PuzzleState) where
-    MkUnsolvedPuzzle :: NonEmpty PuzzleLetter -> Puzzle 'Unsolved
-    MkSolvedPuzzle :: Solution -> Puzzle 'Solved
+    UnsolvedPuzzle :: NonEmpty PuzzleLetter -> Puzzle 'Unsolved
+    SolvedPuzzle :: Solution -> Puzzle 'Solved
 
 deriving stock instance Eq (Puzzle state)
 deriving stock instance Show (Puzzle state)
 
-pattern SolvedPuzzle :: Solution -> Puzzle 'Solved
-pattern SolvedPuzzle solution <- MkSolvedPuzzle solution
+getSolution :: Puzzle state -> Solution
+getSolution (SolvedPuzzle solution) = solution
+getSolution (UnsolvedPuzzle puzzle) = letterToChar <$> puzzle
 
-getSolution :: Puzzle 'Solved -> Solution
-getSolution (MkSolvedPuzzle solution) = solution
+type PuzzleDescription = NonEmpty (Maybe Char)
+
+describePuzzle :: Puzzle 'Unsolved -> PuzzleDescription
+describePuzzle (UnsolvedPuzzle puzzle) = letterToMaybe <$> puzzle
 
 createPuzzle :: Solution -> Puzzle 'Unsolved
-createPuzzle solution = MkUnsolvedPuzzle $ Hidden . toUpper <$> solution
+createPuzzle solution = UnsolvedPuzzle $ Hidden . toUpper <$> solution
 
 guessLetter :: Char -> Puzzle 'Unsolved -> Either (Puzzle 'Solved) (Puzzle 'Unsolved)
-guessLetter guess (MkUnsolvedPuzzle puzzle)
-    | isSolved = Left $ MkSolvedPuzzle solution
-    | otherwise = Right $ MkUnsolvedPuzzle newPuzzle
+guessLetter guess (UnsolvedPuzzle puzzle)
+    | isSolved = Left $ SolvedPuzzle solution
+    | otherwise = Right $ UnsolvedPuzzle newPuzzle
   where
     newPuzzle = checkLetter (toUpper guess) <$> puzzle
     isSolved = all letterIsGuessed newPuzzle

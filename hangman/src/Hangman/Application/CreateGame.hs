@@ -1,38 +1,29 @@
+{-# LANGUAGE DerivingStrategies #-}
 {-# LANGUAGE RecordWildCards #-}
-{-# LANGUAGE DataKinds #-}
 
 module Hangman.Application.CreateGame
-    ( Command(..)
-    , createGame
-    , createRandomGame) where
+    ( createGame
+    , createRandomGame
+    ) where
 
-import Data.List.NonEmpty (NonEmpty)
-import Hangman.Model.PositiveInt (PositiveInt)
-import Hangman.Model.Game (createNewGame, GameId(..), GameRepository(..), Solution(..), AnyGame(..))
+import qualified Hangman.Model.Game as Game
+import Hangman.Model.Puzzle (Solution)
+import Hangman.Application.Ports (AnyGame(..), GameMonad(..), PuzzleGeneratorMonad (nextPuzzle))
 
 data Command = Command
-    { gameId :: GameId
-    , puzzle :: NonEmpty Char
-    , chances :: PositiveInt
-    }
+    { solution :: Solution
+    , chances :: Game.Chances
+    } deriving stock (Eq,Show)
 
-createGame
-    :: GameRepository m
-    => Command
-    -> m ()
-createGame Command{..} =
-    saveGame . AnyGame $ createNewGame gameId (Solution puzzle) chances
-
-class Monad m => GeneratePuzzleMonad m where
-    generatePuzzle :: m (NonEmpty Char)
+createGame :: GameMonad m => Command -> m ()
+createGame Command{..} = setGame . AnyGame $ Game.createNewGame solution chances
 
 createRandomGame
-    :: GeneratePuzzleMonad m
-    => GameRepository m
-    => PositiveInt
-    -> GameId
+    :: PuzzleGeneratorMonad m
+    => GameMonad m
+    => Game.Chances
     -> m ()
-createRandomGame chances gameId = do
-    puzzle <- generatePuzzle
-    createGame $ Command {..}
+createRandomGame chances = do
+    solution <- nextPuzzle
+    createGame Command{..}
 

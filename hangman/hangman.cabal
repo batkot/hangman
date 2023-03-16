@@ -26,6 +26,8 @@ source-repository head
 library
   exposed-modules:
       Hangman.Application.CreateGame
+      Hangman.Application.GuessLetter
+      Hangman.Application.Ports
       Hangman.Model.Game
       Hangman.Model.PositiveInt
       Hangman.Model.Puzzle

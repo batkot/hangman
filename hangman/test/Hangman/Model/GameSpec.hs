@@ -19,7 +19,8 @@ import Data.List.NonEmpty.Extra (nubOrdOn)
 import Hangman.Model.Game
 import Hangman.Model.PositiveInt
 import Hangman.Model.PositiveInt.Arbitrary ()
-import Data.Foldable (foldl')
+import Hangman.Model.Puzzle (Solution)
+import Data.Foldable (foldrM)
 import Test.Tasty.QuickCheck (testProperty)
 import Test.QuickCheck (Arbitrary(..), InfiniteList(..), suchThat)
 import GHC.Unicode (toUpper)
@@ -32,15 +33,11 @@ test_rules = testGroup "Hangman.Model.Game tests"
     , testProperty "Can make N - 1 mistakes and still win" canMakeSomeMistakesAndStillWin
     ]
 
-runGame :: Foldable f => Game 'Running -> f Char -> AnyGame
-runGame game = foldl' step (AnyGame game)
-  where
-    step :: AnyGame -> Char -> AnyGame
-    step (AnyGame (RunningGame a b c)) guess = guessLetter guess $ RunningGame a b c
-    step x _ = x
+runGame :: Foldable f => Game 'Running -> f Char -> Either FinishedGame (Game 'Running)
+runGame = foldrM guessLetter
 
 getWrongChars :: InfiniteList Char -> Solution -> [Char]
-getWrongChars infiniteChars (Solution solution) = wrongChars
+getWrongChars infiniteChars solution = wrongChars
   where
     puzzleChars = toUpper <$> nubOrdOn toUpper solution
     wrongChars = filter ((`notElem` puzzleChars) . toUpper) . getInfiniteList $ infiniteChars
@@ -49,7 +46,7 @@ guessingAllPuzzleCharsSolvesThePuzzle :: RunningGameData 'Any -> Bool
 guessingAllPuzzleCharsSolvesThePuzzle RunningGameData{..} =
     isWon result
   where
-    guesses = nubOrdOn toUpper $ unSolution solution
+    guesses = nubOrdOn toUpper solution
     result = runGame game guesses
 
 guessingWrongCharNTimesLosesTheGame :: RunningGameData 'Any -> InfiniteList Char -> Bool
@@ -63,7 +60,7 @@ guessingGuessedLetterDecreasesScore :: RunningGameData 'AtLeast2DifferentLetters
 guessingGuessedLetterDecreasesScore RunningGameData{..} =
     isLost result
   where
-    existingChar = head . unSolution $ solution
+    existingChar = head solution
     chances = toInt . getLeftChances $ game
     result = runGame game $ replicate (chances + 1) existingChar
 
@@ -73,7 +70,7 @@ canMakeSomeMistakesAndStillWin RunningGameData{..} infiniteChars =
   where
     chances = toInt . getLeftChances $ game
     wrongGuesses = take (chances - 1) $ getWrongChars infiniteChars solution
-    (lastGuess :| goodGuesses) = nubOrdOn toUpper $ unSolution solution
+    (lastGuess :| goodGuesses) = nubOrdOn toUpper solution
     guesses = concat . transpose $ [wrongGuesses, goodGuesses]
     result = runGame game $ guesses ++ [lastGuess]
 
@@ -87,18 +84,14 @@ data RunningGameData (state :: PuzzleKind) = RunningGameData
 
 instance Arbitrary (RunningGameData 'Any) where
     arbitrary = do
-        gameId <- GameId <$> arbitrary
-        puzzle <- (:|) <$> arbitrary <*> arbitrary
-        let solution = Solution puzzle
+        solution <- (:|) <$> arbitrary <*> arbitrary
         chances <- arbitrary
-        let game = createNewGame gameId solution chances
+        let game = createNewGame solution chances
         return (RunningGameData game solution)
 
 instance Arbitrary (RunningGameData 'AtLeast2DifferentLetters) where
     arbitrary = do
-        gameId <- GameId <$> arbitrary
-        puzzle <- (`suchThat` ((<) 1 . length . nubOrdOn toUpper)) $ (:|) <$> arbitrary <*> arbitrary
+        solution <- (`suchThat` ((<) 1 . length . nubOrdOn toUpper)) $ (:|) <$> arbitrary <*> arbitrary
         chances <- arbitrary
-        let solution = Solution puzzle
-        let game = createNewGame gameId solution chances
+        let game = createNewGame solution chances
         return (RunningGameData game solution)
