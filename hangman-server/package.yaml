@@ -25,7 +25,13 @@ dependencies:
 - servant-server
 - servant-swagger
 - servant-swagger-ui
+- swagger2
 - text
+- transformers
+- unordered-containers
+- aeson
+- lens
+- uuid
 
 ghc-options:
 - -Wall

@@ -1,5 +1,4 @@
 {-# LANGUAGE DerivingStrategies #-}
-{-# LANGUAGE RecordWildCards #-}
 
 module Hangman.Application.CreateGame
     ( createGame
@@ -11,24 +10,18 @@ import Hangman.Application.Ports (GameMonad(..), PuzzleGeneratorMonad (nextPuzzl
 import Hangman.Model.Game (GameId, Chances, createNewGame)
 import Hangman.Named (name)
 
-data Command = Command
-    { gameId :: GameId
-    , solution :: Solution
-    , chances :: Chances
-    } deriving stock (Eq,Show)
-
-createGame :: GameMonad m => Command -> m ()
-createGame Command{..} =
+createGame :: GameMonad m => GameId -> Chances -> Solution -> m ()
+createGame gameId chances solution =
     name gameId $ \namedGameId ->
         setGame namedGameId $ createNewGame solution chances
 
 createRandomGame
     :: PuzzleGeneratorMonad m
     => GameMonad m
-    => Chances
-    -> GameId
+    => GameId
+    -> Chances
     -> m ()
-createRandomGame chances gameId = do
+createRandomGame gameId chances = do
     solution <- nextPuzzle
-    createGame Command{..}
+    createGame gameId chances solution
 

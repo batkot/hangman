@@ -23,6 +23,7 @@ dependencies:
 - base >= 4.7 && < 5
 - either
 - uuid
+- transformers
 
 ghc-options:
 - -Wall
