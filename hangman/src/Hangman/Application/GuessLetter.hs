@@ -7,14 +7,14 @@ module Hangman.Application.GuessLetter
     ) where
 
 import qualified Hangman.Model.Game as Game
-import Hangman.Application.Ports (AnyGame(..), GameMonad(..))
+import Hangman.Application.Ports (GameMonad(..))
 
 newtype Command = Command { guess :: Char } deriving newtype (Eq,Show)
 
 guessLetter :: GameMonad m => Command -> m ()
 guessLetter Command{..} = do
     game <- getGame
-    setGame . wrapGame $ Game.guessLetter guess game
+    doSetGame $ Game.guessLetter guess game
   where
-    wrapGame = either (either AnyGame AnyGame) AnyGame
+    doSetGame = either (either setGame setGame) setGame
 

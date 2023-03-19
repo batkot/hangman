@@ -28,31 +28,31 @@ type Chances = PositiveInt
 
 data GameState = Running | Lost | Won
 
-data Game (state :: GameState) where
-    RunningGame :: Puzzle 'Unsolved -> PositiveInt -> Game 'Running
-    LostGame :: Puzzle 'Unsolved -> Game 'Lost
-    WonGame :: Puzzle 'Solved -> Game 'Won
+data Game gameId (state :: GameState) where
+    RunningGame :: Puzzle 'Unsolved -> PositiveInt -> Game gameId 'Running
+    LostGame :: Puzzle 'Unsolved -> Game gameId 'Lost
+    WonGame :: Puzzle 'Solved -> Game gameId 'Won
 
-deriving stock instance Eq (Game state)
-deriving stock instance Show (Game state)
+deriving stock instance Eq (Game gameId state)
+deriving stock instance Show (Game gameId state)
 
-type FinishedGame = Either (Game 'Lost) (Game 'Won)
+type FinishedGame gameId = Either (Game gameId 'Lost) (Game gameId 'Won)
 
-getLeftChances :: Game 'Running -> Chances
+getLeftChances :: Game gameId 'Running -> Chances
 getLeftChances (RunningGame _ chances) = chances
 
-isWon :: Either FinishedGame (Game 'Running) -> Bool
+isWon :: Either (FinishedGame gameId) (Game gameId 'Running) -> Bool
 isWon = either isRight (const False)
 
-isLost :: Either FinishedGame (Game 'Running) -> Bool
+isLost :: Either (FinishedGame gameId) (Game gameId 'Running) -> Bool
 isLost = either isLeft (const False)
 
-createNewGame :: Solution -> Chances -> Game 'Running
+createNewGame :: Solution -> Chances -> Game gameId 'Running
 createNewGame solution = RunningGame gamePuzzle
   where
     gamePuzzle = createPuzzle solution
 
-guessLetter :: Char -> Game 'Running -> Either FinishedGame (Game 'Running)
+guessLetter :: Char -> Game gameId 'Running -> Either (FinishedGame gameId) (Game gameId 'Running)
 guessLetter x (RunningGame puzzle chances) = do
     unsolvedPuzzle <- first gameWon (Puzzle.guessLetter x puzzle)
     newChances <-

@@ -8,7 +8,7 @@ module Hangman.Application.CreateGame
 
 import qualified Hangman.Model.Game as Game
 import Hangman.Model.Puzzle (Solution)
-import Hangman.Application.Ports (AnyGame(..), GameMonad(..), PuzzleGeneratorMonad (nextPuzzle))
+import Hangman.Application.Ports (GameMonad(..), PuzzleGeneratorMonad (nextPuzzle))
 
 data Command = Command
     { solution :: Solution
@@ -16,7 +16,7 @@ data Command = Command
     } deriving stock (Eq,Show)
 
 createGame :: GameMonad m => Command -> m ()
-createGame Command{..} = setGame . AnyGame $ Game.createNewGame solution chances
+createGame Command{..} = setGame $ Game.createNewGame solution chances
 
 createRandomGame
     :: PuzzleGeneratorMonad m

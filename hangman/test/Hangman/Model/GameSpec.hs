@@ -33,7 +33,7 @@ test_rules = testGroup "Hangman.Model.Game tests"
     , testProperty "Can make N - 1 mistakes and still win" canMakeSomeMistakesAndStillWin
     ]
 
-runGame :: Foldable f => Game 'Running -> f Char -> Either FinishedGame (Game 'Running)
+runGame :: Foldable f => Game gameId 'Running -> f Char -> Either (FinishedGame gameId) (Game gameId 'Running)
 runGame = foldrM guessLetter
 
 getWrongChars :: InfiniteList Char -> Solution -> [Char]
@@ -42,21 +42,21 @@ getWrongChars infiniteChars solution = wrongChars
     puzzleChars = toUpper <$> nubOrdOn toUpper solution
     wrongChars = filter ((`notElem` puzzleChars) . toUpper) . getInfiniteList $ infiniteChars
 
-guessingAllPuzzleCharsSolvesThePuzzle :: RunningGameData 'Any -> Bool
+guessingAllPuzzleCharsSolvesThePuzzle :: RunningGameData gameId 'Any -> Bool
 guessingAllPuzzleCharsSolvesThePuzzle RunningGameData{..} =
     isWon result
   where
     guesses = nubOrdOn toUpper solution
     result = runGame game guesses
 
-guessingWrongCharNTimesLosesTheGame :: RunningGameData 'Any -> InfiniteList Char -> Bool
+guessingWrongCharNTimesLosesTheGame :: RunningGameData gameId 'Any -> InfiniteList Char -> Bool
 guessingWrongCharNTimesLosesTheGame RunningGameData{..} infiniteChars =
    isLost result
   where
     chances = toInt . getLeftChances $ game
     result = runGame game $ take chances $ getWrongChars infiniteChars solution
 
-guessingGuessedLetterDecreasesScore :: RunningGameData 'AtLeast2DifferentLetters -> Bool
+guessingGuessedLetterDecreasesScore :: RunningGameData gameId 'AtLeast2DifferentLetters -> Bool
 guessingGuessedLetterDecreasesScore RunningGameData{..} =
     isLost result
   where
@@ -64,7 +64,7 @@ guessingGuessedLetterDecreasesScore RunningGameData{..} =
     chances = toInt . getLeftChances $ game
     result = runGame game $ replicate (chances + 1) existingChar
 
-canMakeSomeMistakesAndStillWin :: RunningGameData 'Any -> InfiniteList Char -> Bool
+canMakeSomeMistakesAndStillWin :: RunningGameData gameId 'Any -> InfiniteList Char -> Bool
 canMakeSomeMistakesAndStillWin RunningGameData{..} infiniteChars =
     isWon result
   where
@@ -76,20 +76,20 @@ canMakeSomeMistakesAndStillWin RunningGameData{..} infiniteChars =
 
 data PuzzleKind = Any | AtLeast2DifferentLetters
 
-data RunningGameData (state :: PuzzleKind) = RunningGameData
-    { game :: Game 'Running
+data RunningGameData gameId (state :: PuzzleKind) = RunningGameData
+    { game :: Game gameId 'Running
     , solution :: Solution
     }
     deriving stock (Eq, Show)
 
-instance Arbitrary (RunningGameData 'Any) where
+instance Arbitrary (RunningGameData gameId 'Any) where
     arbitrary = do
         solution <- (:|) <$> arbitrary <*> arbitrary
         chances <- arbitrary
         let game = createNewGame solution chances
         return (RunningGameData game solution)
 
-instance Arbitrary (RunningGameData 'AtLeast2DifferentLetters) where
+instance Arbitrary (RunningGameData gameId 'AtLeast2DifferentLetters) where
     arbitrary = do
         solution <- (`suchThat` ((<) 1 . length . nubOrdOn toUpper)) $ (:|) <$> arbitrary <*> arbitrary
         chances <- arbitrary

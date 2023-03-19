@@ -31,6 +31,7 @@ library
       Hangman.Model.Game
       Hangman.Model.PositiveInt
       Hangman.Model.Puzzle
+      Hangman.Named
   other-modules:
       Paths_hangman
   hs-source-dirs:
