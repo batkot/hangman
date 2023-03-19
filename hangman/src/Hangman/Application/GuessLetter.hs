@@ -8,13 +8,18 @@ module Hangman.Application.GuessLetter
 
 import qualified Hangman.Model.Game as Game
 import Hangman.Application.Ports (GameMonad(..))
+import Hangman.Named (name)
 
-newtype Command = Command { guess :: Char } deriving newtype (Eq,Show)
+data Command = Command
+    { gameId :: Game.GameId
+    , guess :: Char }
+    deriving stock (Eq,Show)
 
 guessLetter :: GameMonad m => Command -> m ()
-guessLetter Command{..} = do
-    game <- getGame
-    doSetGame $ Game.guessLetter guess game
-  where
-    doSetGame = either (either setGame setGame) setGame
+guessLetter Command{..} =
+    name gameId $ \namedGameId -> do
+        game <- getGame namedGameId
+        let setGame' = setGame namedGameId
+            doSetGame = either (either setGame' setGame') setGame'
+        doSetGame $ Game.guessLetter guess game
 

@@ -40,6 +40,7 @@ library
   build-depends:
       base >=4.7 && <5
     , either
+    , uuid
   default-language: Haskell2010
 
 test-suite unit
@@ -66,4 +67,5 @@ test-suite unit
     , tasty-discover
     , tasty-hunit
     , tasty-quickcheck
+    , uuid
   default-language: Haskell2010

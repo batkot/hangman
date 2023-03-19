@@ -1,9 +1,11 @@
-{-# LANGUAGE DerivingStrategies #-}
-{-# LANGUAGE StandaloneDeriving #-}
-{-# LANGUAGE DataKinds #-}
-{-# LANGUAGE GADTs #-}
-{-# LANGUAGE KindSignatures #-}
-{-# LANGUAGE StrictData #-}
+{-# LANGUAGE DataKinds                  #-}
+{-# LANGUAGE DerivingStrategies         #-}
+{-# LANGUAGE GADTs                      #-}
+{-# LANGUAGE GeneralizedNewtypeDeriving #-}
+{-# LANGUAGE KindSignatures             #-}
+{-# LANGUAGE RankNTypes                 #-}
+{-# LANGUAGE StandaloneDeriving         #-}
+{-# LANGUAGE StrictData                 #-}
 
 module Hangman.Model.Game
     ( guessLetter
@@ -15,16 +17,21 @@ module Hangman.Model.Game
     , getLeftChances
     , isWon
     , isLost
+    , GameId(..)
     ) where
 
-import Hangman.Model.PositiveInt (PositiveInt, decrement)
-import Hangman.Model.Puzzle (Puzzle, PuzzleState(..), Solution, createPuzzle)
-import qualified Hangman.Model.Puzzle as Puzzle (guessLetter)
+import           Hangman.Model.PositiveInt (PositiveInt, decrement)
+import           Hangman.Model.Puzzle      (Puzzle, PuzzleState (..), Solution,
+                                            createPuzzle)
+import qualified Hangman.Model.Puzzle      as Puzzle (guessLetter)
 
-import Data.Bifunctor (first)
-import Data.Either.Combinators (maybeToRight, isLeft, isRight)
+import           Data.Bifunctor            (first)
+import           Data.Either.Combinators   (isLeft, isRight, maybeToRight)
+import           Data.UUID
 
 type Chances = PositiveInt
+
+newtype GameId = GameId { unGameId :: UUID } deriving newtype (Eq,Show)
 
 data GameState = Running | Lost | Won
 

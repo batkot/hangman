@@ -6,24 +6,29 @@ module Hangman.Application.CreateGame
     , createRandomGame
     ) where
 
-import qualified Hangman.Model.Game as Game
 import Hangman.Model.Puzzle (Solution)
 import Hangman.Application.Ports (GameMonad(..), PuzzleGeneratorMonad (nextPuzzle))
+import Hangman.Model.Game (GameId, Chances, createNewGame)
+import Hangman.Named (name)
 
 data Command = Command
-    { solution :: Solution
-    , chances :: Game.Chances
+    { gameId :: GameId
+    , solution :: Solution
+    , chances :: Chances
     } deriving stock (Eq,Show)
 
 createGame :: GameMonad m => Command -> m ()
-createGame Command{..} = setGame $ Game.createNewGame solution chances
+createGame Command{..} =
+    name gameId $ \namedGameId ->
+        setGame namedGameId $ createNewGame solution chances
 
 createRandomGame
     :: PuzzleGeneratorMonad m
     => GameMonad m
-    => Game.Chances
+    => Chances
+    -> GameId
     -> m ()
-createRandomGame chances = do
+createRandomGame chances gameId = do
     solution <- nextPuzzle
     createGame Command{..}
 
