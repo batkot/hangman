@@ -17,7 +17,7 @@ import Servant.Server (Application, ServerT)
 import Servant.Swagger (toSwagger)
 import Servant.Swagger.UI (SwaggerSchemaUI, swaggerSchemaUIServerT)
 
-import qualified Hangman.Server.Game as Game
+import qualified Hangman.Server.Games as Games
 import Hangman.Application.Ports (GameMonad, PuzzleGeneratorMonad)
 import Control.Monad.IO.Class (MonadIO)
 
@@ -31,7 +31,7 @@ cat =
 
 type Api =
     Get '[PlainText] Text
-    :<|> "games" :> Game.Api
+    :<|> "games" :> Games.Api
 
 type ServerApi = SwaggerSchemaUI "swagger-ui" "swagger.json" :<|> Api
 
@@ -40,7 +40,7 @@ server
     => PuzzleGeneratorMonad m
     => MonadIO m
     => ServerT ServerApi m
-server = swaggerSchemaUIServerT (toSwagger @Api Proxy) :<|> return cat :<|> Game.api
+server = swaggerSchemaUIServerT (toSwagger @Api Proxy) :<|> return cat :<|> Games.api
 
 application
     :: GameMonad m

@@ -15,6 +15,7 @@ import qualified Network.Wai.Handler.Warp as Warp
 import Network.HTTP.Client (newManager, defaultManagerSettings)
 import Data.Proxy (Proxy(..))
 import Data.Text (Text)
+import Data.IORef (newIORef)
 import Hangman.Adapters.InMemory
 import Servant ((:<|>)(..))
 
@@ -41,7 +42,8 @@ createWebAppClient (WebAppHandle (port, _)) = do
 createWebApp :: IO WebAppHandle
 createWebApp = do
     (port, socket) <- Warp.openFreePort
-    threadId <- forkIO $ Warp.runSettingsSocket Warp.defaultSettings socket $ application (runConstPuzzleGenT (fromList "PUZZLE") . runInMemoryGameStorageT empty)
+    gamesIoRef <- newIORef empty
+    threadId <- forkIO $ Warp.runSettingsSocket Warp.defaultSettings socket $ application (runConstPuzzleGenT (fromList "PUZZLE") . runInMemoryGameStorageT gamesIoRef)
     return (WebAppHandle (port, threadId))
 
 destroyWebApp :: WebAppHandle -> IO ()

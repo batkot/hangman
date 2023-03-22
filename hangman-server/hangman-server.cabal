@@ -27,7 +27,7 @@ library
   exposed-modules:
       Hangman.Adapters.InMemory
       Hangman.Server
-      Hangman.Server.Game
+      Hangman.Server.Games
   other-modules:
       Paths_hangman_server
   hs-source-dirs:
@@ -36,6 +36,7 @@ library
   build-depends:
       aeson
     , base >=4.7 && <5
+    , extra
     , hangman
     , lens
     , servant-server
@@ -58,6 +59,7 @@ executable hangman-server-exe
   build-depends:
       aeson
     , base >=4.7 && <5
+    , extra
     , hangman
     , hangman-server
     , lens
@@ -88,6 +90,7 @@ test-suite e2e
     , QuickCheck
     , aeson
     , base >=4.7 && <5
+    , extra
     , hangman
     , hangman-server
     , http-client

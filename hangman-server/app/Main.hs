@@ -4,6 +4,7 @@ import Hangman.Server (application)
 import Hangman.Adapters.InMemory (runConstPuzzleGenT, runInMemoryGameStorageT)
 
 import Data.HashMap.Strict (empty)
+import Data.IORef (newIORef)
 import Data.List.NonEmpty (fromList)
 import Network.Wai.Handler.Warp (run)
 import Options.Applicative (Parser, long, short, metavar, help, option, auto, (<**>), info, helper, fullDesc, progDesc, execParser)
@@ -20,8 +21,10 @@ main :: IO ()
 main = do
     opt <- execParser options
     putStrLn $ "Starting on port " <> show (port opt)
-    run (port opt) app
+    createApp >>= run (port opt)
   where
     options = info (optionParser <**> helper)
         (fullDesc <> progDesc "Run Foo Server")
-    app = application (runConstPuzzleGenT (fromList "PUZZLE") . runInMemoryGameStorageT empty)
+    createApp = do
+       ioRef <- newIORef empty
+       return $ application (runConstPuzzleGenT (fromList "PUZZLE") . runInMemoryGameStorageT ioRef)

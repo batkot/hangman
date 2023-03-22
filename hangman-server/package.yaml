@@ -32,6 +32,7 @@ dependencies:
 - aeson
 - lens
 - uuid
+- extra
 
 ghc-options:
 - -Wall

@@ -10,19 +10,21 @@ module Hangman.Adapters.InMemory
     , runConstPuzzleGenT
     ) where
 
+import           Control.Monad              ((<=<))
 import           Control.Monad.IO.Class     (MonadIO, liftIO)
 import           Control.Monad.Trans.Class  (MonadTrans)
 import           Control.Monad.Trans.Reader (ReaderT, ask, runReaderT)
 import           Data.HashMap.Strict        as HM
 import           Data.IORef
-import           Data.Maybe                 (fromJust)
-import           Data.UUID                  (UUID)
+import           Data.Bifunctor             (bimap)
+import           Data.UUID                  (UUID, toString)
 import           Hangman.Application.Ports  (GameMonad (..),
                                              PuzzleGeneratorMonad (..))
 import           Hangman.Model.Game         (Game (RunningGame), GameId (..),
                                              GameState (..))
 import           Hangman.Model.Puzzle       (Solution)
 import           Hangman.Named              (Named, unName)
+import Data.Either.Extra (maybeToEither, fromRight, fromEither)
 
 data AnyGame = forall gameId (state :: GameState). AnyGame (Game gameId state)
 
@@ -33,30 +35,31 @@ newtype InMemoryGameStorageT m a =
         deriving newtype (Functor, Applicative, Monad, MonadTrans, MonadIO)
 
 runInMemoryGameStorageT
-    :: MonadIO m
-    => HM.HashMap UUID AnyGame
+    :: IORef (HM.HashMap UUID AnyGame)
     -> InMemoryGameStorageT m a
     -> m a
-runInMemoryGameStorageT gameMap inMemT = do
-    ioRef <- liftIO $ newIORef gameMap
-    flip runReaderT ioRef $ unInMemoryGameStorageT inMemT
+runInMemoryGameStorageT gameMapIoRef = flip runReaderT gameMapIoRef . unInMemoryGameStorageT
 
 instance MonadIO m => GameMonad (InMemoryGameStorageT m) where
   getGame :: Named gameId GameId -> InMemoryGameStorageT m (Game gameId 'Running)
   getGame gameId = InMemoryGameStorageT $ do
       ioRef <- ask
       gameMap <- liftIO $ readIORef ioRef
-      let (GameId x) = unName gameId
-      return $ fromJust undefined $ HM.lookup x gameMap >>= findGame
+      let game = findGame <=< maybeToEither ("Couldn't find game: " <> toString rawGameId) $ HM.lookup rawGameId gameMap
+      liftIO $ fromEither $ bimap fail return game
     where
-      findGame :: AnyGame -> Maybe (Game gameId 'Running)
-      findGame (AnyGame (RunningGame a b)) = Just $ RunningGame a b
-      findGame _                           = Nothing
+      rawGameId :: UUID
+      rawGameId = unGameId . unName $ gameId
+
+      findGame :: AnyGame -> Either String (Game gameId 'Running)
+      findGame (AnyGame (RunningGame a b)) = Right $ RunningGame a b
+      findGame _ = Left $ toString rawGameId <> "is not a running game"
 
   setGame :: Named gameId GameId -> Game gameId state -> InMemoryGameStorageT m ()
   setGame gameId game = InMemoryGameStorageT $ do
       ioRef <- ask
       liftIO $ modifyIORef ioRef $ HM.insert ((unGameId . unName) gameId) (AnyGame game)
+
 
 newtype ConstPuzzleGenT m a =
     ConstPuzzleGenT { unConstPuzzleGenT :: ReaderT Solution m a }
