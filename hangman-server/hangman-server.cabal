@@ -36,9 +36,11 @@ library
   build-depends:
       aeson
     , base >=4.7 && <5
+    , bytestring
     , extra
     , hangman
     , lens
+    , mtl
     , servant-server
     , servant-swagger
     , servant-swagger-ui
@@ -59,10 +61,12 @@ executable hangman-server-exe
   build-depends:
       aeson
     , base >=4.7 && <5
+    , bytestring
     , extra
     , hangman
     , hangman-server
     , lens
+    , mtl
     , optparse-applicative
     , servant-server
     , servant-swagger
@@ -79,6 +83,7 @@ test-suite e2e
   type: exitcode-stdio-1.0
   main-is: Spec.hs
   other-modules:
+      Hangman.Server.GamesSpec
       Hangman.Server.GetSpec
       Hangman.Server.Resources.WebApp
       Paths_hangman_server
@@ -90,11 +95,13 @@ test-suite e2e
     , QuickCheck
     , aeson
     , base >=4.7 && <5
+    , bytestring
     , extra
     , hangman
     , hangman-server
     , http-client
     , lens
+    , mtl
     , servant-client
     , servant-server
     , servant-swagger

@@ -2,6 +2,7 @@
 module Hangman.Server.Resources.WebApp
     ( WebClient(..)
     , withWebApp
+    , GamesClient(..)
     ) where
 
 import Hangman.Server (application, Api)
@@ -18,10 +19,18 @@ import Data.Text (Text)
 import Data.IORef (newIORef)
 import Hangman.Adapters.InMemory
 import Servant ((:<|>)(..))
+import Hangman.Server.Games (CreateGameRequest(..), CreateGameResponse(..))
 
 data WebClient = WebClient
     { get :: ClientM Text
+    , games :: GamesClient
     , env :: ClientEnv
+    }
+
+data GamesClient = GamesClient
+    { createGame :: CreateGameRequest -> ClientM CreateGameResponse
+    , getGame :: Text -> ClientM CreateGameResponse
+    , guessLetter :: Text -> Char -> ClientM CreateGameResponse
     }
 
 newtype WebAppHandle = WebAppHandle { unHandle :: (Warp.Port, ThreadId) }
@@ -33,11 +42,12 @@ withWebApp tests =
 
 createWebAppClient :: WebAppHandle -> IO WebClient
 createWebAppClient (WebAppHandle (port, _)) = do
-    let (app :<|> _) = client @Api Proxy
+    let (app :<|> (createGame :<|> getGame :<|> guessLetter)) = client @Api Proxy
         baseUrl = BaseUrl Http "localhost" port ""
     manager <- newManager defaultManagerSettings
     let clientEnv = mkClientEnv manager baseUrl
-    return $ WebClient app clientEnv
+        gamesClient = GamesClient createGame getGame guessLetter
+    return $ WebClient app gamesClient clientEnv
 
 createWebApp :: IO WebAppHandle
 createWebApp = do

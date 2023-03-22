@@ -33,6 +33,8 @@ dependencies:
 - lens
 - uuid
 - extra
+- mtl
+- bytestring
 
 ghc-options:
 - -Wall

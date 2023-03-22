@@ -3,6 +3,7 @@
 {-# LANGUAGE TypeApplications #-}
 {-# LANGUAGE TypeOperators #-}
 {-# LANGUAGE RankNTypes #-}
+{-# LANGUAGE FlexibleContexts #-}
 
 module Hangman.Server
     ( application
@@ -12,7 +13,7 @@ module Hangman.Server
 
 import Data.Proxy (Proxy(..))
 import Data.Text (Text, intercalate)
-import Servant (Get, PlainText, (:<|>)(..), serve, Handler, hoistServer, (:>))
+import Servant (Get, PlainText, (:<|>)(..), serve, Handler, hoistServer, (:>), ServerError)
 import Servant.Server (Application, ServerT)
 import Servant.Swagger (toSwagger)
 import Servant.Swagger.UI (SwaggerSchemaUI, swaggerSchemaUIServerT)
@@ -20,6 +21,7 @@ import Servant.Swagger.UI (SwaggerSchemaUI, swaggerSchemaUIServerT)
 import qualified Hangman.Server.Games as Games
 import Hangman.Application.Ports (GameMonad, PuzzleGeneratorMonad)
 import Control.Monad.IO.Class (MonadIO)
+import Control.Monad.Error.Class (MonadError)
 
 cat :: Text
 cat =
@@ -39,6 +41,7 @@ server
     :: GameMonad m
     => PuzzleGeneratorMonad m
     => MonadIO m
+    => MonadError ServerError m
     => ServerT ServerApi m
 server = swaggerSchemaUIServerT (toSwagger @Api Proxy) :<|> return cat :<|> Games.api
 
@@ -46,6 +49,7 @@ application
     :: GameMonad m
     => PuzzleGeneratorMonad m
     => MonadIO m
+    => MonadError ServerError m
     => (forall x. m x -> Handler x)
     -> Application
 application runMonadStack = serve api $ hoistServer api runMonadStack server

@@ -1,9 +1,14 @@
 {-# LANGUAGE DataKinds                  #-}
 {-# LANGUAGE DerivingStrategies         #-}
+{-# LANGUAGE FlexibleInstances          #-}
 {-# LANGUAGE GADTs                      #-}
 {-# LANGUAGE GeneralizedNewtypeDeriving #-}
-{-# LANGUAGE KindSignatures             #-}
 {-# LANGUAGE InstanceSigs               #-}
+{-# LANGUAGE KindSignatures             #-}
+{-# LANGUAGE MultiParamTypeClasses      #-}
+{-# LANGUAGE StandaloneDeriving         #-}
+{-# LANGUAGE UndecidableInstances       #-}
+
 
 module Hangman.Adapters.InMemory
     ( runInMemoryGameStorageT
@@ -11,12 +16,14 @@ module Hangman.Adapters.InMemory
     ) where
 
 import           Control.Monad              ((<=<))
+import           Control.Monad.Error.Class  (MonadError)
 import           Control.Monad.IO.Class     (MonadIO, liftIO)
 import           Control.Monad.Trans.Class  (MonadTrans)
 import           Control.Monad.Trans.Reader (ReaderT, ask, runReaderT)
+import           Data.Bifunctor             (bimap)
+import           Data.Either.Extra          (fromEither, maybeToEither)
 import           Data.HashMap.Strict        as HM
 import           Data.IORef
-import           Data.Bifunctor             (bimap)
 import           Data.UUID                  (UUID, toString)
 import           Hangman.Application.Ports  (GameMonad (..),
                                              PuzzleGeneratorMonad (..))
@@ -24,7 +31,6 @@ import           Hangman.Model.Game         (Game (RunningGame), GameId (..),
                                              GameState (..))
 import           Hangman.Model.Puzzle       (Solution)
 import           Hangman.Named              (Named, unName)
-import Data.Either.Extra (maybeToEither, fromRight, fromEither)
 
 data AnyGame = forall gameId (state :: GameState). AnyGame (Game gameId state)
 
@@ -33,6 +39,8 @@ type GameStorage = IORef (HM.HashMap UUID AnyGame)
 newtype InMemoryGameStorageT m a =
     InMemoryGameStorageT { unInMemoryGameStorageT :: ReaderT GameStorage m a }
         deriving newtype (Functor, Applicative, Monad, MonadTrans, MonadIO)
+
+deriving newtype instance MonadError err m => MonadError err (InMemoryGameStorageT m)
 
 runInMemoryGameStorageT
     :: IORef (HM.HashMap UUID AnyGame)
@@ -64,6 +72,8 @@ instance MonadIO m => GameMonad (InMemoryGameStorageT m) where
 newtype ConstPuzzleGenT m a =
     ConstPuzzleGenT { unConstPuzzleGenT :: ReaderT Solution m a }
         deriving newtype (Functor, Applicative, Monad, MonadTrans, MonadIO)
+
+deriving newtype instance MonadError err m => MonadError err (ConstPuzzleGenT m)
 
 runConstPuzzleGenT :: Solution -> ConstPuzzleGenT m a -> m a
 runConstPuzzleGenT solution = flip runReaderT solution . unConstPuzzleGenT
