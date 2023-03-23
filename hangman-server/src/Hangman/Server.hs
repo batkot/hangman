@@ -22,6 +22,7 @@ import qualified Hangman.Server.Games as Games
 import Hangman.Application.Ports (GameMonad, PuzzleGeneratorMonad)
 import Control.Monad.IO.Class (MonadIO)
 import Control.Monad.Error.Class (MonadError)
+import Hangman.Read.Game (GameReadMonad)
 
 cat :: Text
 cat =
@@ -39,6 +40,7 @@ type ServerApi = SwaggerSchemaUI "swagger-ui" "swagger.json" :<|> Api
 
 server
     :: GameMonad m
+    => GameReadMonad m
     => PuzzleGeneratorMonad m
     => MonadIO m
     => MonadError ServerError m
@@ -47,6 +49,7 @@ server = swaggerSchemaUIServerT (toSwagger @Api Proxy) :<|> return cat :<|> Game
 
 application
     :: GameMonad m
+    => GameReadMonad m
     => PuzzleGeneratorMonad m
     => MonadIO m
     => MonadError ServerError m

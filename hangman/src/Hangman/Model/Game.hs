@@ -1,4 +1,5 @@
 {-# LANGUAGE DataKinds                  #-}
+{-# LANGUAGE DeriveGeneric              #-}
 {-# LANGUAGE DerivingStrategies         #-}
 {-# LANGUAGE GADTs                      #-}
 {-# LANGUAGE GeneralizedNewtypeDeriving #-}
@@ -28,12 +29,13 @@ import qualified Hangman.Model.Puzzle      as Puzzle (guessLetter)
 import           Data.Bifunctor            (first)
 import           Data.Either.Combinators   (isLeft, isRight, maybeToRight)
 import           Data.UUID
+import           GHC.Generics              (Generic)
 
 type Chances = PositiveInt
 
 newtype GameId = GameId { unGameId :: UUID } deriving newtype (Eq,Show)
 
-data GameState = Running | Lost | Won
+data GameState = Running | Lost | Won deriving stock (Eq, Show, Generic)
 
 data Game gameId (state :: GameState) where
     RunningGame :: Puzzle 'Unsolved -> PositiveInt -> Game gameId 'Running

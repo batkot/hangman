@@ -19,7 +19,7 @@ import Data.Text (Text)
 import Data.IORef (newIORef)
 import Hangman.Adapters.InMemory
 import Servant ((:<|>)(..))
-import Hangman.Server.Games (CreateGameRequest(..), CreateGameResponse(..))
+import Hangman.Server.Games (CreateGameRequest(..), GameDescriptionResponse(..))
 
 data WebClient = WebClient
     { get :: ClientM Text
@@ -28,9 +28,9 @@ data WebClient = WebClient
     }
 
 data GamesClient = GamesClient
-    { createGame :: CreateGameRequest -> ClientM CreateGameResponse
-    , getGame :: Text -> ClientM CreateGameResponse
-    , guessLetter :: Text -> Char -> ClientM CreateGameResponse
+    { createGame :: CreateGameRequest -> ClientM GameDescriptionResponse
+    , getGame :: Text -> ClientM GameDescriptionResponse
+    , guessLetter :: Text -> Char -> ClientM GameDescriptionResponse
     }
 
 newtype WebAppHandle = WebAppHandle { unHandle :: (Warp.Port, ThreadId) }

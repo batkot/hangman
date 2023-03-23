@@ -15,7 +15,8 @@ import           Test.Tasty.HUnit                ((@?=))
 import           Test.Tasty.QuickCheck           (testProperty, Property)
 import Data.Text (unpack, pack, intersperse)
 import qualified Data.Text as Text
-import Hangman.Server.Games (CreateGameRequest(..), CreateGameResponse(..))
+import Hangman.Server.Games (CreateGameRequest(..), GameDescriptionResponse(..))
+import Hangman.Model.Game (GameState(..))
 import GHC.Unicode (toUpper)
 import Data.List.Extra (nubOrdOn)
 
@@ -60,4 +61,6 @@ shouldUsePuzzleGivenOnCreation webClientM (ValidRequest createGameRequest) = ioP
 
     results <- mapM (\guess -> runClientM (guessLetter games createdGameId guess) env) guesses
 
-    last results @?= Right (CreateGameResponse createdGameId (maybe Text.empty (intersperse ' ' . Text.toUpper) puzzle))
+    last results @?= Right (GameDescriptionResponse createdGameId Won Nothing (maybe Text.empty Text.toUpper puzzle))
+
+-- Guessing letters on finished game should return 404 (or 409?)

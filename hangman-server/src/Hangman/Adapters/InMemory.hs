@@ -27,10 +27,12 @@ import           Data.IORef
 import           Data.UUID                  (UUID, toString)
 import           Hangman.Application.Ports  (GameMonad (..),
                                              PuzzleGeneratorMonad (..))
-import           Hangman.Model.Game         (Game (RunningGame), GameId (..),
+import           Hangman.Model.Game         (Game (..), GameId (..),
                                              GameState (..))
 import           Hangman.Model.Puzzle       (Solution)
 import           Hangman.Named              (Named, unName)
+import           Hangman.Read.Game          (GameDescription,
+                                             GameReadMonad (..), describeGame)
 
 data AnyGame = forall gameId (state :: GameState). AnyGame (Game gameId state)
 
@@ -68,6 +70,19 @@ instance MonadIO m => GameMonad (InMemoryGameStorageT m) where
       ioRef <- ask
       liftIO $ modifyIORef ioRef $ HM.insert ((unGameId . unName) gameId) (AnyGame game)
 
+instance MonadIO m => GameReadMonad (InMemoryGameStorageT m) where
+  findGameDescription :: Named gameId GameId -> InMemoryGameStorageT m (Maybe (GameDescription gameId))
+  findGameDescription gameId = InMemoryGameStorageT $ do
+      ioRef <- ask
+      gameMap <- liftIO $ readIORef ioRef
+      return $ doDescribeGame <$> HM.lookup rawGameId gameMap
+    where
+      rawGameId :: UUID
+      rawGameId = unGameId . unName $ gameId
+
+      doDescribeGame (AnyGame (RunningGame x y)) = describeGame gameId $ RunningGame x y
+      doDescribeGame (AnyGame (LostGame x)) = describeGame gameId $ LostGame x
+      doDescribeGame (AnyGame (WonGame x)) = describeGame gameId $ WonGame x
 
 newtype ConstPuzzleGenT m a =
     ConstPuzzleGenT { unConstPuzzleGenT :: ReaderT Solution m a }

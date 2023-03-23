@@ -3,6 +3,7 @@
 {-# LANGUAGE DerivingStrategies #-}
 {-# LANGUAGE FlexibleContexts   #-}
 {-# LANGUAGE GADTs              #-}
+{-# LANGUAGE LambdaCase         #-}
 {-# LANGUAGE OverloadedStrings  #-}
 {-# LANGUAGE TypeOperators      #-}
 
@@ -10,7 +11,7 @@ module Hangman.Server.Games
     ( Api
     , api
     , CreateGameRequest(..)
-    , CreateGameResponse(..)
+    , GameDescriptionResponse(..)
     ) where
 
 import           Control.Lens
@@ -32,17 +33,18 @@ import           Hangman.Application.CreateGame  as CreateGame
 import           Hangman.Application.GuessLetter as GuessLetter
 import           Hangman.Application.Ports       (GameMonad (getGame),
                                                   PuzzleGeneratorMonad)
-import           Hangman.Model.Game              (Game (RunningGame),
-                                                  GameId (..),
-                                                  GameState (Running))
+import           Hangman.Model.Game              (Game (LostGame, RunningGame, WonGame),
+                                                  GameId (..), GameState (..))
 import qualified Hangman.Model.PositiveInt       as PositiveInt
-import           Hangman.Model.Puzzle            (describePuzzle)
+import           Hangman.Model.Puzzle            (describePuzzle, getSolution)
+import           Hangman.Named                   (Named, unName)
 import qualified Hangman.Named                   as Named
 import           Servant                         (Capture, Get, JSON, Post,
                                                   ReqBody,
                                                   ServerError (errBody), err400,
-                                                  (:<|>) (..), (:>))
+                                                  (:<|>) (..), (:>), err404)
 import           Servant.Server                  (ServerT)
+import Hangman.Read.Game (GameReadMonad (..), GameDescription(..))
 
 newtype CreateGameRequest = CreateGameRequest (Maybe Text)
     deriving stock (Generic, Show, Eq)
@@ -55,34 +57,54 @@ instance ToSchema CreateGameRequest where
         & mapped.schema.description ?~ "Create new Hangman puzzle"
         & mapped.schema.example ?~ toJSON (CreateGameRequest Nothing)
 
-data CreateGameResponse = CreateGameResponse
-    { gameId      :: Text
-    , puzzleState :: Text
+data GameDescriptionResponse = GameDescriptionResponse
+    { gameId           :: Text
+    , status           :: GameState
+    , remainingChances :: Maybe Int
+    , puzzle           :: Text
     }
     deriving stock (Generic, Show, Eq)
 
-instance ToJSON CreateGameResponse
-instance FromJSON CreateGameResponse
+instance ToJSON GameState
+instance FromJSON GameState
 
-instance ToSchema CreateGameResponse where
+instance ToSchema GameState where
+    declareNamedSchema = genericDeclareNamedSchema defaultSchemaOptions
+
+instance ToJSON GameDescriptionResponse
+instance FromJSON GameDescriptionResponse
+
+instance ToSchema GameDescriptionResponse where
     declareNamedSchema proxy = genericDeclareNamedSchema defaultSchemaOptions proxy
-        & mapped.schema.description ?~ "Response from creating new game, containing new game Id"
-        & mapped.schema.example ?~ toJSON (CreateGameResponse "f9ffdc08-3e36-4fff-bad4-1d742ca3da7e" "_ _ Z Z _ E")
+        & mapped.schema.description ?~ "Description of Hangman game"
+        & mapped.schema.example ?~ toJSON (GameDescriptionResponse "f9ffdc08-3e36-4fff-bad4-1d742ca3da7e" Running (Just 3) "_ _ Z Z _ E")
 
 type Api =
-    ReqBody '[JSON] CreateGameRequest :> Post '[JSON] CreateGameResponse
-    :<|> Capture "gameId" Text :> Get '[JSON] CreateGameResponse
-    :<|> Capture "gameId" Text :> "guess" :> Capture "letter" Char :> Post '[JSON] CreateGameResponse
+    ReqBody '[JSON] CreateGameRequest :> Post '[JSON] GameDescriptionResponse
+    :<|> Capture "gameId" Text :> Get '[JSON] GameDescriptionResponse
+    :<|> Capture "gameId" Text :> "guess" :> Capture "letter" Char :> Post '[JSON] GameDescriptionResponse
 
 api :: GameMonad m
+    => GameReadMonad m
     => PuzzleGeneratorMonad m
     => MonadError ServerError m
     => MonadIO m
     => ServerT Api m
 api = createGameHandler :<|> getGameHandler :<|> guessLetterHandler
 
-describeGame :: Game gameId 'Running -> Text
-describeGame (RunningGame unsolvedPuzzle _) = pack . intersperse ' ' . toList $ fromMaybe '_' <$> describePuzzle unsolvedPuzzle
+descriptionToDto :: GameDescription gameId -> GameDescriptionResponse
+descriptionToDto (GameDescription gameId gameState chances puzzle) =
+    GameDescriptionResponse rawGameId gameState rawChances puzzle
+  where
+    rawGameId = UUID.toText . unGameId . unName $ gameId
+    rawChances = PositiveInt.toInt <$> chances
+
+getGameDescription
+    :: GameReadMonad m
+    => GameId
+    -> m (Maybe GameDescriptionResponse)
+getGameDescription gameId =
+    Named.name gameId $ fmap (fmap descriptionToDto) . findGameDescription
 
 parseGameId :: MonadError ServerError m => Text -> m GameId
 parseGameId rawGameId =
@@ -92,36 +114,38 @@ parseGameId rawGameId =
 
 createGameHandler
     :: GameMonad m
+    => GameReadMonad m
     => PuzzleGeneratorMonad m
     => MonadIO m
     => CreateGameRequest
-    -> m CreateGameResponse
+    -> m GameDescriptionResponse
 createGameHandler (CreateGameRequest puzzle) = do
-    let chances = PositiveInt.increment . PositiveInt.increment $ PositiveInt.one
+    let chances = foldr ($) PositiveInt.one $ replicate 9 PositiveInt.increment
     gameId <- liftIO $ GameId <$> UUID.nextRandom
     maybe (CreateGame.createRandomGame gameId chances) (CreateGame.createGame gameId chances) $ puzzle >>= NonEmpty.nonEmpty . unpack
-    gameDescription <- Named.name gameId (fmap describeGame . getGame)
-    let rawGameId = UUID.toText . unGameId $ gameId
-    return $ CreateGameResponse rawGameId gameDescription
+    maybeGameDescription <- getGameDescription gameId
+    return $ fromJust maybeGameDescription
 
 getGameHandler
     :: GameMonad m
+    => GameReadMonad m
     => MonadError ServerError m
     => Text
-    -> m CreateGameResponse
+    -> m GameDescriptionResponse
 getGameHandler rawGameId = do
     gameId <- parseGameId rawGameId
-    gameDescription <- Named.name gameId (fmap describeGame . getGame)
-    return $ CreateGameResponse rawGameId gameDescription
+    maybeGameDescription <- getGameDescription gameId
+    maybe (throwError err404) return maybeGameDescription
 
 guessLetterHandler
     :: GameMonad m
+    => GameReadMonad m
     => Text
     -> Char
-    -> m CreateGameResponse
+    -> m GameDescriptionResponse
 guessLetterHandler rawGameId guess = do
     GuessLetter.guessLetter gameId guess
-    gameDescription <- Named.name gameId (fmap describeGame . getGame)
-    return $ CreateGameResponse rawGameId gameDescription
+    maybeGameDescription <- getGameDescription gameId
+    return $ fromJust maybeGameDescription
   where
     gameId = GameId . fromJust . UUID.fromText $ rawGameId
