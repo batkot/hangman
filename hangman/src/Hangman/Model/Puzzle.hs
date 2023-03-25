@@ -1,7 +1,7 @@
-{-# LANGUAGE DataKinds #-}
-{-# LANGUAGE GADTs #-}
-{-# LANGUAGE KindSignatures #-}
+{-# LANGUAGE DataKinds          #-}
 {-# LANGUAGE DerivingStrategies #-}
+{-# LANGUAGE GADTs              #-}
+{-# LANGUAGE KindSignatures     #-}
 {-# LANGUAGE StandaloneDeriving #-}
 
 module Hangman.Model.Puzzle
@@ -14,8 +14,8 @@ module Hangman.Model.Puzzle
     , describePuzzle
     ) where
 
-import Data.List.NonEmpty (NonEmpty)
-import GHC.Unicode (toUpper)
+import           Data.List.NonEmpty (NonEmpty)
+import           GHC.Unicode        (toUpper)
 
 data PuzzleLetter
     = Hidden Char
@@ -23,7 +23,7 @@ data PuzzleLetter
     deriving stock Eq
 
 instance Show PuzzleLetter where
-    show (Hidden x) = ['|', x, '|']
+    show (Hidden x)  = ['|', x, '|']
     show (Guessed x) = [x]
 
 checkLetter :: Char -> PuzzleLetter -> PuzzleLetter
@@ -34,15 +34,15 @@ checkLetter _ x = x
 
 letterIsGuessed :: PuzzleLetter -> Bool
 letterIsGuessed (Guessed _) = True
-letterIsGuessed (Hidden _) = False
+letterIsGuessed (Hidden _)  = False
 
 letterToChar :: PuzzleLetter -> Char
-letterToChar (Hidden x) = x
+letterToChar (Hidden x)  = x
 letterToChar (Guessed x) = x
 
 letterToMaybe :: PuzzleLetter -> Maybe Char
 letterToMaybe (Guessed x) = Just x
-letterToMaybe _ = Nothing
+letterToMaybe _           = Nothing
 
 type Solution = NonEmpty Char
 

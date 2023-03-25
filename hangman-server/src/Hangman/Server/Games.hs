@@ -39,12 +39,13 @@ import qualified Hangman.Model.PositiveInt       as PositiveInt
 import           Hangman.Model.Puzzle            (describePuzzle, getSolution)
 import           Hangman.Named                   (Named, unName)
 import qualified Hangman.Named                   as Named
+import           Hangman.Read.Game               (GameDescription (..),
+                                                  GameReadMonad (..))
 import           Servant                         (Capture, Get, JSON, Post,
                                                   ReqBody,
                                                   ServerError (errBody), err400,
-                                                  (:<|>) (..), (:>), err404)
+                                                  err404, (:<|>) (..), (:>))
 import           Servant.Server                  (ServerT)
-import Hangman.Read.Game (GameReadMonad (..), GameDescription(..))
 
 newtype CreateGameRequest = CreateGameRequest (Maybe Text)
     deriving stock (Generic, Show, Eq)

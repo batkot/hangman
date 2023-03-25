@@ -1,24 +1,27 @@
 {-# LANGUAGE DerivingStrategies         #-}
+{-# LANGUAGE FlexibleInstances          #-}
 {-# LANGUAGE GeneralizedNewtypeDeriving #-}
 {-# LANGUAGE RecordWildCards            #-}
-{-# LANGUAGE FlexibleInstances #-}
 
 module Hangman.Server.GamesSpec
     ( tests
     ) where
 
-import           Hangman.Server.Resources.WebApp (WebClient (..), GamesClient (..))
+import           Data.List.Extra                 (nubOrdOn)
+import           Data.Text                       (intersperse, pack, unpack)
+import qualified Data.Text                       as Text
+import           GHC.Unicode                     (toUpper)
+import           Hangman.Model.Game              (GameState (..))
+import           Hangman.Server.Games            (CreateGameRequest (..),
+                                                  GameDescriptionResponse (..))
+import           Hangman.Server.Resources.WebApp (GamesClient (..),
+                                                  WebClient (..))
 import           Servant.Client                  (runClientM)
-import           Test.QuickCheck                 (Arbitrary (..), ioProperty, getNonEmpty)
+import           Test.QuickCheck                 (Arbitrary (..), getNonEmpty,
+                                                  ioProperty)
 import           Test.Tasty                      (TestTree, testGroup)
 import           Test.Tasty.HUnit                ((@?=))
-import           Test.Tasty.QuickCheck           (testProperty, Property)
-import Data.Text (unpack, pack, intersperse)
-import qualified Data.Text as Text
-import Hangman.Server.Games (CreateGameRequest(..), GameDescriptionResponse(..))
-import Hangman.Model.Game (GameState(..))
-import GHC.Unicode (toUpper)
-import Data.List.Extra (nubOrdOn)
+import           Test.Tasty.QuickCheck           (Property, testProperty)
 
 newtype ValidRequest a = ValidRequest a deriving newtype (Show, Eq)
 newtype InvalidRequest a = InvalidRequest a deriving newtype (Show, Eq)

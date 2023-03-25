@@ -1,9 +1,9 @@
+{-# LANGUAGE DataKinds         #-}
+{-# LANGUAGE FlexibleContexts  #-}
 {-# LANGUAGE OverloadedStrings #-}
-{-# LANGUAGE DataKinds #-}
-{-# LANGUAGE TypeApplications #-}
-{-# LANGUAGE TypeOperators #-}
-{-# LANGUAGE RankNTypes #-}
-{-# LANGUAGE FlexibleContexts #-}
+{-# LANGUAGE RankNTypes        #-}
+{-# LANGUAGE TypeApplications  #-}
+{-# LANGUAGE TypeOperators     #-}
 
 module Hangman.Server
     ( application
@@ -11,18 +11,21 @@ module Hangman.Server
     , ServerApi
     ) where
 
-import Data.Proxy (Proxy(..))
-import Data.Text (Text, intercalate)
-import Servant (Get, PlainText, (:<|>)(..), serve, Handler, hoistServer, (:>), ServerError)
-import Servant.Server (Application, ServerT)
-import Servant.Swagger (toSwagger)
-import Servant.Swagger.UI (SwaggerSchemaUI, swaggerSchemaUIServerT)
+import           Data.Proxy                (Proxy (..))
+import           Data.Text                 (Text, intercalate)
+import           Servant                   (Get, Handler, PlainText,
+                                            ServerError, hoistServer, serve,
+                                            (:<|>) (..), (:>))
+import           Servant.Server            (Application, ServerT)
+import           Servant.Swagger           (toSwagger)
+import           Servant.Swagger.UI        (SwaggerSchemaUI,
+                                            swaggerSchemaUIServerT)
 
-import qualified Hangman.Server.Games as Games
-import Hangman.Application.Ports (GameMonad, PuzzleGeneratorMonad)
-import Control.Monad.IO.Class (MonadIO)
-import Control.Monad.Error.Class (MonadError)
-import Hangman.Read.Game (GameReadMonad)
+import           Control.Monad.Error.Class (MonadError)
+import           Control.Monad.IO.Class    (MonadIO)
+import           Hangman.Application.Ports (GameMonad, PuzzleGeneratorMonad)
+import           Hangman.Read.Game         (GameReadMonad)
+import qualified Hangman.Server.Games      as Games
 
 cat :: Text
 cat =

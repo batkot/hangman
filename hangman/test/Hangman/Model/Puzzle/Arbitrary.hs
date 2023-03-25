@@ -1,15 +1,15 @@
-{-# LANGUAGE DataKinds #-}
-{-# LANGUAGE RecordWildCards #-}
+{-# LANGUAGE DataKinds          #-}
 {-# LANGUAGE DerivingStrategies #-}
+{-# LANGUAGE RecordWildCards    #-}
 
 module Hangman.Model.Puzzle.Arbitrary (UnsolvedPuzzle(..)) where
 
-import Hangman.Model.Puzzle
-import Test.QuickCheck (Arbitrary(arbitrary))
-import Data.List.NonEmpty (NonEmpty(..))
+import           Data.List.NonEmpty   (NonEmpty (..))
+import           Hangman.Model.Puzzle
+import           Test.QuickCheck      (Arbitrary (arbitrary))
 
 data UnsolvedPuzzle = UnsolvedPuzzle
-    { puzzle :: Puzzle 'Unsolved
+    { puzzle   :: Puzzle 'Unsolved
     , solution :: Solution
     } deriving stock (Eq, Show)
 

@@ -5,31 +5,33 @@ module Hangman.Server.Resources.WebApp
     , GamesClient(..)
     ) where
 
-import Hangman.Server (application, Api)
+import           Hangman.Server            (Api, application)
 
-import Servant.Client (ClientEnv, ClientM, client, mkClientEnv, BaseUrl (..), Scheme (Http))
-import Data.List.NonEmpty (fromList)
-import Data.HashMap.Strict (empty)
-import Test.Tasty (TestTree, withResource)
-import Control.Concurrent (ThreadId, killThread, forkIO)
-import qualified Network.Wai.Handler.Warp as Warp
-import Network.HTTP.Client (newManager, defaultManagerSettings)
-import Data.Proxy (Proxy(..))
-import Data.Text (Text)
-import Data.IORef (newIORef)
-import Hangman.Adapters.InMemory
-import Servant ((:<|>)(..))
-import Hangman.Server.Games (CreateGameRequest(..), GameDescriptionResponse(..))
+import           Control.Concurrent        (ThreadId, forkIO, killThread)
+import           Data.HashMap.Strict       (empty)
+import           Data.IORef                (newIORef)
+import           Data.List.NonEmpty        (fromList)
+import           Data.Proxy                (Proxy (..))
+import           Data.Text                 (Text)
+import           Hangman.Adapters.InMemory
+import           Hangman.Server.Games      (CreateGameRequest (..),
+                                            GameDescriptionResponse (..))
+import           Network.HTTP.Client       (defaultManagerSettings, newManager)
+import qualified Network.Wai.Handler.Warp  as Warp
+import           Servant                   ((:<|>) (..))
+import           Servant.Client            (BaseUrl (..), ClientEnv, ClientM,
+                                            Scheme (Http), client, mkClientEnv)
+import           Test.Tasty                (TestTree, withResource)
 
 data WebClient = WebClient
-    { get :: ClientM Text
+    { get   :: ClientM Text
     , games :: GamesClient
-    , env :: ClientEnv
+    , env   :: ClientEnv
     }
 
 data GamesClient = GamesClient
-    { createGame :: CreateGameRequest -> ClientM GameDescriptionResponse
-    , getGame :: Text -> ClientM GameDescriptionResponse
+    { createGame  :: CreateGameRequest -> ClientM GameDescriptionResponse
+    , getGame     :: Text -> ClientM GameDescriptionResponse
     , guessLetter :: Text -> Char -> ClientM GameDescriptionResponse
     }
 

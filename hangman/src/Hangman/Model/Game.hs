@@ -27,10 +27,10 @@ import           Hangman.Model.Puzzle      (Puzzle, PuzzleState (..), Solution,
 import qualified Hangman.Model.Puzzle      as Puzzle (guessLetter)
 
 import           Data.Bifunctor            (first)
+import           Data.Either               (isLeft, isRight)
+import           Data.Either.Extra         (maybeToEither)
 import           Data.UUID
 import           GHC.Generics              (Generic)
-import Data.Either (isRight, isLeft)
-import Data.Either.Extra (maybeToEither)
 
 type Chances = PositiveInt
 

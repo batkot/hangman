@@ -2,9 +2,9 @@ module Hangman.Application.GuessLetter
     ( guessLetter
     ) where
 
-import qualified Hangman.Model.Game as Game
-import Hangman.Application.Ports (GameMonad(..))
-import Hangman.Named (name)
+import           Hangman.Application.Ports (GameMonad (..))
+import qualified Hangman.Model.Game        as Game
+import           Hangman.Named             (name)
 
 guessLetter :: GameMonad m => Game.GameId -> Char -> m ()
 guessLetter gameId guess =

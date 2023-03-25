@@ -2,13 +2,13 @@ module Hangman.Model.PositiveInt.Spec
     ( test_positiveInt
     ) where
 
-import Data.Either (isRight)
-import Test.HUnit ((@?=))
-import Test.Tasty (TestTree, testGroup)
-import Test.Tasty.HUnit (testCase)
-import Test.Tasty.QuickCheck (testProperty)
-import Hangman.Model.PositiveInt
-import Hangman.Model.PositiveInt.Arbitrary ()
+import           Data.Either                         (isRight)
+import           Hangman.Model.PositiveInt
+import           Hangman.Model.PositiveInt.Arbitrary ()
+import           Test.HUnit                          ((@?=))
+import           Test.Tasty                          (TestTree, testGroup)
+import           Test.Tasty.HUnit                    (testCase)
+import           Test.Tasty.QuickCheck               (testProperty)
 
 test_positiveInt :: TestTree
 test_positiveInt =

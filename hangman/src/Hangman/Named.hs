@@ -1,5 +1,5 @@
-{-# LANGUAGE RankNTypes #-}
 {-# LANGUAGE PatternSynonyms #-}
+{-# LANGUAGE RankNTypes      #-}
 
 module Hangman.Named
     ( Named

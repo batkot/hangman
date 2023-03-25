@@ -1,29 +1,31 @@
-{-# LANGUAGE RecordWildCards #-}
+{-# LANGUAGE DataKinds          #-}
 {-# LANGUAGE DerivingStrategies #-}
-{-# LANGUAGE DataKinds #-}
-{-# LANGUAGE KindSignatures #-}
-{-# LANGUAGE FlexibleInstances #-}
-{-# LANGUAGE NoImplicitPrelude #-}
-{-# LANGUAGE GADTs #-}
+{-# LANGUAGE FlexibleInstances  #-}
+{-# LANGUAGE GADTs              #-}
+{-# LANGUAGE KindSignatures     #-}
+{-# LANGUAGE NoImplicitPrelude  #-}
+{-# LANGUAGE RecordWildCards    #-}
 
 module Hangman.Model.GameSpec
     ( test_rules
     ) where
 
-import Prelude hiding (head)
-import Test.Tasty (TestTree, testGroup)
+import           Prelude                             hiding (head)
+import           Test.Tasty                          (TestTree, testGroup)
 
-import Data.List (transpose)
-import Data.List.NonEmpty (NonEmpty ((:|)), head)
-import Data.List.NonEmpty.Extra (nubOrdOn)
-import Hangman.Model.Game
-import Hangman.Model.PositiveInt
-import Hangman.Model.PositiveInt.Arbitrary ()
-import Hangman.Model.Puzzle (Solution)
-import Data.Foldable (foldrM)
-import Test.Tasty.QuickCheck (testProperty)
-import Test.QuickCheck (Arbitrary(..), InfiniteList(..), suchThat)
-import GHC.Unicode (toUpper)
+import           Data.Foldable                       (foldrM)
+import           Data.List                           (transpose)
+import           Data.List.NonEmpty                  (NonEmpty ((:|)), head)
+import           Data.List.NonEmpty.Extra            (nubOrdOn)
+import           GHC.Unicode                         (toUpper)
+import           Hangman.Model.Game
+import           Hangman.Model.PositiveInt
+import           Hangman.Model.PositiveInt.Arbitrary ()
+import           Hangman.Model.Puzzle                (Solution)
+import           Test.QuickCheck                     (Arbitrary (..),
+                                                      InfiniteList (..),
+                                                      suchThat)
+import           Test.Tasty.QuickCheck               (testProperty)
 
 test_rules :: TestTree
 test_rules = testGroup "Hangman.Model.Game tests"
@@ -77,7 +79,7 @@ canMakeSomeMistakesAndStillWin RunningGameData{..} infiniteChars =
 data PuzzleKind = Any | AtLeast2DifferentLetters
 
 data RunningGameData gameId (state :: PuzzleKind) = RunningGameData
-    { game :: Game gameId 'Running
+    { game     :: Game gameId 'Running
     , solution :: Solution
     }
     deriving stock (Eq, Show)

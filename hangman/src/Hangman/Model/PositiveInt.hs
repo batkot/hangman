@@ -1,6 +1,6 @@
-{-# LANGUAGE PatternSynonyms #-}
-{-# LANGUAGE DerivingStrategies #-}
+{-# LANGUAGE DerivingStrategies         #-}
 {-# LANGUAGE GeneralizedNewtypeDeriving #-}
+{-# LANGUAGE PatternSynonyms            #-}
 
 module Hangman.Model.PositiveInt
     ( createPositiveInt
@@ -14,7 +14,7 @@ module Hangman.Model.PositiveInt
     , toInt
     ) where
 
-import Data.Either.Extra (eitherToMaybe)
+import           Data.Either.Extra (eitherToMaybe)
 
 newtype PositiveInt =
     MkPositiveInt { unPositiveInt :: Int }

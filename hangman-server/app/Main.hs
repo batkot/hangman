@@ -1,13 +1,16 @@
 module Main (main) where
 
-import Hangman.Server (application)
-import Hangman.Adapters.InMemory (runConstPuzzleGenT, runInMemoryGameStorageT)
+import           Hangman.Adapters.InMemory (runConstPuzzleGenT,
+                                            runInMemoryGameStorageT)
+import           Hangman.Server            (application)
 
-import Data.HashMap.Strict (empty)
-import Data.IORef (newIORef)
-import Data.List.NonEmpty (fromList)
-import Network.Wai.Handler.Warp (run)
-import Options.Applicative (Parser, long, short, metavar, help, option, auto, (<**>), info, helper, fullDesc, progDesc, execParser)
+import           Data.HashMap.Strict       (empty)
+import           Data.IORef                (newIORef)
+import           Data.List.NonEmpty        (fromList)
+import           Network.Wai.Handler.Warp  (run)
+import           Options.Applicative       (Parser, auto, execParser, fullDesc,
+                                            help, helper, info, long, metavar,
+                                            option, progDesc, short, (<**>))
 
 data Options = Options
     { port :: Int

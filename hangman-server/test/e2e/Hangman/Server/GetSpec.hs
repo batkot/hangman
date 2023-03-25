@@ -3,11 +3,11 @@ module Hangman.Server.GetSpec
     ( tests
     ) where
 
-import Test.Tasty (TestTree, testGroup)
-import Hangman.Server.Resources.WebApp (WebClient(..))
-import Test.Tasty.HUnit (testCase, (@?))
-import Servant.Client (runClientM)
-import Data.Either (isRight)
+import           Data.Either                     (isRight)
+import           Hangman.Server.Resources.WebApp (WebClient (..))
+import           Servant.Client                  (runClientM)
+import           Test.Tasty                      (TestTree, testGroup)
+import           Test.Tasty.HUnit                (testCase, (@?))
 
 tests :: IO WebClient -> TestTree
 tests webClientM =

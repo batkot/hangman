@@ -1,18 +1,18 @@
-{-# LANGUAGE DataKinds #-}
-{-# LANGUAGE KindSignatures #-}
+{-# LANGUAGE DataKinds                 #-}
 {-# LANGUAGE ExistentialQuantification #-}
-{-# LANGUAGE UndecidableInstances #-}
-{-# LANGUAGE FlexibleInstances #-}
+{-# LANGUAGE FlexibleInstances         #-}
+{-# LANGUAGE KindSignatures            #-}
+{-# LANGUAGE UndecidableInstances      #-}
 
 module Hangman.Application.Ports
     ( GameMonad(..)
     , PuzzleGeneratorMonad(..)
     ) where
 
-import Hangman.Model.Game (Game, GameState(..), GameId)
-import Hangman.Model.Puzzle (Solution)
-import Hangman.Named (Named)
-import Control.Monad.Trans.Class (MonadTrans, lift)
+import           Control.Monad.Trans.Class (MonadTrans, lift)
+import           Hangman.Model.Game        (Game, GameId, GameState (..))
+import           Hangman.Model.Puzzle      (Solution)
+import           Hangman.Named             (Named)
 
 class Monad m => GameMonad m where
     getGame :: Named gameId GameId -> m (Game gameId 'Running)

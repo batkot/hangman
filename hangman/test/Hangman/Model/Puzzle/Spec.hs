@@ -4,16 +4,17 @@ module Hangman.Model.Puzzle.Spec
     ( test_puzzle
     ) where
 
-import Test.Tasty (TestTree, testGroup)
-import Test.Tasty.QuickCheck (testProperty, InfiniteList (getInfiniteList))
+import           Test.Tasty                     (TestTree, testGroup)
+import           Test.Tasty.QuickCheck          (InfiniteList (getInfiniteList),
+                                                 testProperty)
 
-import Data.Foldable (foldrM)
-import Data.Bifunctor (first)
-import qualified Data.List.NonEmpty as NonEmpty (head)
-import Hangman.Model.Puzzle
-import Hangman.Model.Puzzle.Arbitrary
-import Data.List.NonEmpty.Extra (nubOrdOn)
-import GHC.Unicode (toUpper, toLower)
+import           Data.Bifunctor                 (first)
+import           Data.Foldable                  (foldrM)
+import qualified Data.List.NonEmpty             as NonEmpty (head)
+import           Data.List.NonEmpty.Extra       (nubOrdOn)
+import           GHC.Unicode                    (toLower, toUpper)
+import           Hangman.Model.Puzzle
+import           Hangman.Model.Puzzle.Arbitrary
 
 test_puzzle :: TestTree
 test_puzzle = testGroup "Hangman.Model.Puzzle tests"
