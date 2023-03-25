@@ -13,7 +13,8 @@ module Hangman.Model.PositiveInt
     , add
     , toInt
     ) where
-import Data.Either.Combinators (rightToMaybe)
+
+import Data.Either.Extra (eitherToMaybe)
 
 newtype PositiveInt =
     MkPositiveInt { unPositiveInt :: Int }
@@ -38,7 +39,7 @@ increment :: PositiveInt -> PositiveInt
 increment = add one
 
 decrement :: PositiveInt -> Maybe PositiveInt
-decrement (MkPositiveInt x) = rightToMaybe . createPositiveInt $ x - 1
+decrement (MkPositiveInt x) = eitherToMaybe . createPositiveInt $ x - 1
 
 toInt :: PositiveInt -> Int
 toInt = unPositiveInt

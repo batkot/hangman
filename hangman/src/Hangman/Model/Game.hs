@@ -27,9 +27,10 @@ import           Hangman.Model.Puzzle      (Puzzle, PuzzleState (..), Solution,
 import qualified Hangman.Model.Puzzle      as Puzzle (guessLetter)
 
 import           Data.Bifunctor            (first)
-import           Data.Either.Combinators   (isLeft, isRight, maybeToRight)
 import           Data.UUID
 import           GHC.Generics              (Generic)
+import Data.Either (isRight, isLeft)
+import Data.Either.Extra (maybeToEither)
 
 type Chances = PositiveInt
 
@@ -66,7 +67,7 @@ guessLetter x (RunningGame puzzle chances) = do
     unsolvedPuzzle <- first gameWon (Puzzle.guessLetter x puzzle)
     newChances <-
         if puzzle == unsolvedPuzzle
-        then maybeToRight (Left (LostGame unsolvedPuzzle)) $ decrement chances
+        then maybeToEither (Left (LostGame unsolvedPuzzle)) $ decrement chances
         else Right chances
     return $ RunningGame unsolvedPuzzle newChances
   where
