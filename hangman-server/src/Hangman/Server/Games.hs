@@ -3,7 +3,6 @@
 {-# LANGUAGE DerivingStrategies #-}
 {-# LANGUAGE FlexibleContexts   #-}
 {-# LANGUAGE GADTs              #-}
-{-# LANGUAGE LambdaCase         #-}
 {-# LANGUAGE OverloadedStrings  #-}
 {-# LANGUAGE TypeOperators      #-}
 
@@ -15,29 +14,25 @@ module Hangman.Server.Games
     ) where
 
 import           Control.Lens
-import           Control.Monad.Error.Class       (MonadError, throwError)
+import           Control.Monad.Error.Class       (MonadError, throwError, liftEither)
 import           Control.Monad.IO.Class          (MonadIO, liftIO)
 import           Data.Aeson                      (FromJSON, ToJSON, toJSON)
 import qualified Data.ByteString.Lazy            as BSL
-import           Data.List                       (intersperse)
-import           Data.List.NonEmpty              (toList)
 import qualified Data.List.NonEmpty              as NonEmpty
-import           Data.Maybe                      (fromJust, fromMaybe)
+import           Data.Maybe                      (fromJust)
 import           Data.Swagger
-import           Data.Text                       (Text, pack, unpack)
+import           Data.Text                       (Text, unpack)
 import qualified Data.Text.Encoding              as Text
 import           Data.UUID                       as UUID
 import           Data.UUID.V4                    as UUID
 import           GHC.Generics                    (Generic)
 import           Hangman.Application.CreateGame  as CreateGame
 import           Hangman.Application.GuessLetter as GuessLetter
-import           Hangman.Application.Ports       (GameMonad (getGame),
+import           Hangman.Application.Ports       (GameMonad,
                                                   PuzzleGeneratorMonad)
-import           Hangman.Model.Game              (Game (LostGame, RunningGame, WonGame),
-                                                  GameId (..), GameState (..))
+import           Hangman.Model.Game              (GameId (..), GameState (..))
 import qualified Hangman.Model.PositiveInt       as PositiveInt
-import           Hangman.Model.Puzzle            (describePuzzle, getSolution)
-import           Hangman.Named                   (Named, unName)
+import           Hangman.Named                   (unName)
 import qualified Hangman.Named                   as Named
 import           Hangman.Read.Game               (GameDescription (..),
                                                   GameReadMonad (..))
@@ -46,6 +41,8 @@ import           Servant                         (Capture, Get, JSON, Post,
                                                   ServerError (errBody), err400,
                                                   err404, (:<|>) (..), (:>))
 import           Servant.Server                  (ServerT)
+import Control.Monad.Trans.Except (runExceptT)
+import Data.Bifunctor (first)
 
 newtype CreateGameRequest = CreateGameRequest (Maybe Text)
     deriving stock (Generic, Show, Eq)
@@ -141,11 +138,13 @@ getGameHandler rawGameId = do
 guessLetterHandler
     :: GameMonad m
     => GameReadMonad m
+    => MonadError ServerError m
     => Text
     -> Char
     -> m GameDescriptionResponse
 guessLetterHandler rawGameId guess = do
-    GuessLetter.guessLetter gameId guess
+    result <- runExceptT $ GuessLetter.guessLetter gameId guess
+    liftEither $ first (const err404) result
     maybeGameDescription <- getGameDescription gameId
     return $ fromJust maybeGameDescription
   where

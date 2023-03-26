@@ -15,15 +15,15 @@ import           Hangman.Model.Puzzle      (Solution)
 import           Hangman.Named             (Named)
 
 class Monad m => GameMonad m where
-    getGame :: Named gameId GameId -> m (Game gameId 'Running)
-    setGame :: Named gameId GameId -> Game gameId state -> m ()
+    findGame :: Named gameId GameId -> m (Maybe (Game gameId 'Running))
+    saveGame :: Named gameId GameId -> Game gameId state -> m ()
 
 instance {-# OVERLAPPABLE #-}
     ( GameMonad m
     , MonadTrans t
     , Monad (t m)) => GameMonad (t m) where
-    getGame = lift . getGame
-    setGame gameId = lift . setGame gameId
+    findGame = lift . findGame
+    saveGame gameId = lift . saveGame gameId
 
 class Monad m => PuzzleGeneratorMonad m where
     nextPuzzle :: m Solution

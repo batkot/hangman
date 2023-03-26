@@ -1,16 +1,20 @@
 module Hangman.Application.GuessLetter
     ( guessLetter
-    ) where
+    , GuessLetterError(..)) where
 
 import           Hangman.Application.Ports (GameMonad (..))
 import qualified Hangman.Model.Game        as Game
 import           Hangman.Named             (name)
+import Control.Monad.Trans.Except (ExceptT, throwE)
 
-guessLetter :: GameMonad m => Game.GameId -> Char -> m ()
+newtype GuessLetterError = GameNotFound Game.GameId
+
+guessLetter
+    :: GameMonad m => Game.GameId -> Char -> ExceptT GuessLetterError m ()
 guessLetter gameId guess =
     name gameId $ \namedGameId -> do
-        game <- getGame namedGameId
-        let setGame' = setGame namedGameId
-            doSetGame = either (either setGame' setGame') setGame'
-        doSetGame $ Game.guessLetter guess game
+        game <- findGame namedGameId >>= maybe (throwE (GameNotFound gameId)) return
+        let saveGame' = saveGame namedGameId
+            doSetGame = either (either saveGame' saveGame') saveGame'
 
+        doSetGame $ Game.guessLetter guess game

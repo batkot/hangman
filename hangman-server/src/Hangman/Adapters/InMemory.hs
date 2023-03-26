@@ -8,6 +8,7 @@
 {-# LANGUAGE MultiParamTypeClasses      #-}
 {-# LANGUAGE StandaloneDeriving         #-}
 {-# LANGUAGE UndecidableInstances       #-}
+{-# LANGUAGE TupleSections              #-}
 
 
 module Hangman.Adapters.InMemory
@@ -21,7 +22,7 @@ import           Control.Monad.IO.Class     (MonadIO, liftIO)
 import           Control.Monad.Trans.Class  (MonadTrans)
 import           Control.Monad.Trans.Reader (ReaderT, ask, runReaderT)
 import           Data.Bifunctor             (bimap)
-import           Data.Either.Extra          (fromEither, maybeToEither)
+import           Data.Either.Extra          (fromEither, maybeToEither, eitherToMaybe)
 import           Data.HashMap.Strict        as HM
 import           Data.IORef
 import           Data.UUID                  (UUID, toString)
@@ -51,24 +52,25 @@ runInMemoryGameStorageT
 runInMemoryGameStorageT gameMapIoRef = flip runReaderT gameMapIoRef . unInMemoryGameStorageT
 
 instance MonadIO m => GameMonad (InMemoryGameStorageT m) where
-  getGame :: Named gameId GameId -> InMemoryGameStorageT m (Game gameId 'Running)
-  getGame gameId = InMemoryGameStorageT $ do
+  findGame :: Named gameId GameId -> InMemoryGameStorageT m (Maybe (Game gameId 'Running))
+  findGame gameId = InMemoryGameStorageT $ do
       ioRef <- ask
       gameMap <- liftIO $ readIORef ioRef
-      let game = findGame <=< maybeToEither ("Couldn't find game: " <> toString rawGameId) $ HM.lookup rawGameId gameMap
-      liftIO $ fromEither $ bimap fail return game
+      let game = matchGame <=< maybeToEither ("Couldn't find game: " <> toString rawGameId) $ HM.lookup rawGameId gameMap
+      return $ eitherToMaybe game
+      --liftIO $ fromEither $ bimap fail return game
     where
       rawGameId :: UUID
       rawGameId = unGameId . unName $ gameId
 
-      findGame :: AnyGame -> Either String (Game gameId 'Running)
-      findGame (AnyGame (RunningGame a b)) = Right $ RunningGame a b
-      findGame _ = Left $ toString rawGameId <> "is not a running game"
+      matchGame :: AnyGame -> Either String (Game gameId 'Running)
+      matchGame (AnyGame (RunningGame a b)) = Right $ RunningGame a b
+      matchGame _ = Left $ toString rawGameId <> "is not a running game"
 
-  setGame :: Named gameId GameId -> Game gameId state -> InMemoryGameStorageT m ()
-  setGame gameId game = InMemoryGameStorageT $ do
+  saveGame :: Named gameId GameId -> Game gameId state -> InMemoryGameStorageT m ()
+  saveGame gameId game = InMemoryGameStorageT $ do
       ioRef <- ask
-      liftIO $ modifyIORef ioRef $ HM.insert ((unGameId . unName) gameId) (AnyGame game)
+      liftIO $ atomicModifyIORef' ioRef $ (,()) . HM.insert ((unGameId . unName) gameId) (AnyGame game)
 
 instance MonadIO m => GameReadMonad (InMemoryGameStorageT m) where
   findGameDescription :: Named gameId GameId -> InMemoryGameStorageT m (Maybe (GameDescription gameId))

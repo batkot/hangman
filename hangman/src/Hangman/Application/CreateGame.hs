@@ -14,7 +14,7 @@ import           Hangman.Named             (name)
 createGame :: GameMonad m => GameId -> Chances -> Solution -> m ()
 createGame gameId chances solution =
     name gameId $ \namedGameId ->
-        setGame namedGameId $ createNewGame solution chances
+        saveGame namedGameId $ createNewGame solution chances
 
 createRandomGame
     :: PuzzleGeneratorMonad m
