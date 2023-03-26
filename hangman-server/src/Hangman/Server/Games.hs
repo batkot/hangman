@@ -14,9 +14,12 @@ module Hangman.Server.Games
     ) where
 
 import           Control.Lens
-import           Control.Monad.Error.Class       (MonadError, throwError, liftEither)
+import           Control.Monad.Error.Class       (MonadError, liftEither,
+                                                  throwError)
 import           Control.Monad.IO.Class          (MonadIO, liftIO)
+import           Control.Monad.Trans.Except      (runExceptT)
 import           Data.Aeson                      (FromJSON, ToJSON, toJSON)
+import           Data.Bifunctor                  (first)
 import qualified Data.ByteString.Lazy            as BSL
 import qualified Data.List.NonEmpty              as NonEmpty
 import           Data.Maybe                      (fromJust)
@@ -41,8 +44,6 @@ import           Servant                         (Capture, Get, JSON, Post,
                                                   ServerError (errBody), err400,
                                                   err404, (:<|>) (..), (:>))
 import           Servant.Server                  (ServerT)
-import Control.Monad.Trans.Except (runExceptT)
-import Data.Bifunctor (first)
 
 newtype CreateGameRequest = CreateGameRequest (Maybe Text)
     deriving stock (Generic, Show, Eq)

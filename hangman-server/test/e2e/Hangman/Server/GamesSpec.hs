@@ -7,6 +7,7 @@ module Hangman.Server.GamesSpec
     ( tests
     ) where
 
+import           Control.Monad                   (foldM_)
 import           Data.List.Extra                 (nubOrdOn)
 import           Data.Text                       (pack, unpack)
 import qualified Data.Text                       as Text
@@ -16,14 +17,17 @@ import           Hangman.Server.Games            (CreateGameRequest (..),
                                                   GameDescriptionResponse (..))
 import           Hangman.Server.Resources.WebApp (GamesClient (..),
                                                   WebClient (..))
-import           Servant.Client                  (runClientM, ClientError(FailureResponse), ResponseF(Response))
-import           Test.QuickCheck                 (Arbitrary (..), getNonEmpty,
-                                                  ioProperty, ASCIIString (getASCIIString), listOf, listOf1)
+import           Network.HTTP.Types.Status       (status404)
+import           Servant.Client                  (ClientError (FailureResponse),
+                                                  ResponseF (Response),
+                                                  runClientM)
+import           Test.QuickCheck                 (ASCIIString (getASCIIString),
+                                                  Arbitrary (..), getNonEmpty,
+                                                  ioProperty, listOf, listOf1)
 import           Test.Tasty                      (TestTree, testGroup)
 import           Test.Tasty.HUnit                ((@?=))
-import           Test.Tasty.QuickCheck           (Property, testProperty, suchThat, elements)
-import Network.HTTP.Types.Status (status404)
-import Control.Monad (foldM_)
+import           Test.Tasty.QuickCheck           (Property, elements, suchThat,
+                                                  testProperty)
 
 newtype ValidRequest a = ValidRequest a deriving newtype (Show, Eq)
 newtype InvalidRequest a = InvalidRequest a deriving newtype (Show, Eq)

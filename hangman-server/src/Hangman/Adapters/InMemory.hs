@@ -7,8 +7,8 @@
 {-# LANGUAGE KindSignatures             #-}
 {-# LANGUAGE MultiParamTypeClasses      #-}
 {-# LANGUAGE StandaloneDeriving         #-}
-{-# LANGUAGE UndecidableInstances       #-}
 {-# LANGUAGE TupleSections              #-}
+{-# LANGUAGE UndecidableInstances       #-}
 
 
 module Hangman.Adapters.InMemory
@@ -22,7 +22,8 @@ import           Control.Monad.IO.Class     (MonadIO, liftIO)
 import           Control.Monad.Trans.Class  (MonadTrans)
 import           Control.Monad.Trans.Reader (ReaderT, ask, runReaderT)
 import           Data.Bifunctor             (bimap)
-import           Data.Either.Extra          (fromEither, maybeToEither, eitherToMaybe)
+import           Data.Either.Extra          (eitherToMaybe, fromEither,
+                                             maybeToEither)
 import           Data.HashMap.Strict        as HM
 import           Data.IORef
 import           Data.UUID                  (UUID, toString)
