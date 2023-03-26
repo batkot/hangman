@@ -29,8 +29,8 @@ import qualified Data.Text.Encoding              as Text
 import           Data.UUID                       as UUID
 import           Data.UUID.V4                    as UUID
 import           GHC.Generics                    (Generic)
-import           Hangman.Application.CreateGame  as CreateGame
-import           Hangman.Application.GuessLetter as GuessLetter
+import qualified Hangman.Application.CreateGame  as CreateGame
+import qualified Hangman.Application.GuessLetter as GuessLetter
 import           Hangman.Application.Ports       (GameMonad,
                                                   PuzzleGeneratorMonad)
 import           Hangman.Model.Game              (GameId (..), GameState (..))
@@ -45,7 +45,7 @@ import           Servant                         (Capture, Get, JSON, Post,
                                                   err404, (:<|>) (..), (:>))
 import           Servant.Server                  (ServerT)
 
-newtype CreateGameRequest = CreateGameRequest (Maybe Text)
+newtype CreateGameRequest = CreateGameRequest Text
     deriving stock (Generic, Show, Eq)
 
 instance ToJSON CreateGameRequest
@@ -54,7 +54,7 @@ instance FromJSON CreateGameRequest
 instance ToSchema CreateGameRequest where
     declareNamedSchema proxy = genericDeclareNamedSchema defaultSchemaOptions proxy
         & mapped.schema.description ?~ "Create new Hangman puzzle"
-        & mapped.schema.example ?~ toJSON (CreateGameRequest Nothing)
+        & mapped.schema.example ?~ toJSON (CreateGameRequest "PUZZLE")
 
 data GameDescriptionResponse = GameDescriptionResponse
     { gameId           :: Text
@@ -120,9 +120,11 @@ createGameHandler
     -> m GameDescriptionResponse
 createGameHandler (CreateGameRequest puzzle) = do
     let chances = foldr ($) PositiveInt.one $ replicate 9 PositiveInt.increment
-    gameId <- liftIO $ GameId <$> UUID.nextRandom
-    maybe (CreateGame.createRandomGame gameId chances) (CreateGame.createGame gameId chances) $ puzzle >>= NonEmpty.nonEmpty . unpack
-    maybeGameDescription <- getGameDescription gameId
+    newGameId <- liftIO $ GameId <$> UUID.nextRandom
+    let createRandomGame = CreateGame.createRandomGame newGameId chances
+        createNewGame = CreateGame.createGame newGameId chances
+    maybe createRandomGame createNewGame $ NonEmpty.nonEmpty . unpack $ puzzle
+    maybeGameDescription <- getGameDescription newGameId
     return $ fromJust maybeGameDescription
 
 getGameHandler
@@ -144,9 +146,8 @@ guessLetterHandler
     -> Char
     -> m GameDescriptionResponse
 guessLetterHandler rawGameId guess = do
+    gameId <- parseGameId rawGameId
     result <- runExceptT $ GuessLetter.guessLetter gameId guess
     liftEither $ first (const err404) result
     maybeGameDescription <- getGameDescription gameId
     return $ fromJust maybeGameDescription
-  where
-    gameId = GameId . fromJust . UUID.fromText $ rawGameId
