@@ -82,3 +82,5 @@ tests:
     - tasty
     - tasty-quickcheck
     - tasty-hunit
+    - tasty-golden
+    - filepath

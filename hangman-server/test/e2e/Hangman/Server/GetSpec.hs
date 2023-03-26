@@ -3,17 +3,22 @@ module Hangman.Server.GetSpec
     ( tests
     ) where
 
-import           Data.Either                     (isRight)
+import           Data.ByteString.Lazy            (fromStrict)
+import           Data.Text.Encoding              (encodeUtf8)
 import           Hangman.Server.Resources.WebApp (WebClient (..))
 import           Servant.Client                  (runClientM)
+import           System.FilePath                 ((</>))
 import           Test.Tasty                      (TestTree, testGroup)
-import           Test.Tasty.HUnit                (testCase, (@?))
+import           Test.Tasty.Golden               (goldenVsString)
 
 tests :: IO WebClient -> TestTree
 tests webClientM =
     testGroup "GET / tests"
-        [ testCase "Should return cat" $ do
+        [ goldenVsString "Should return cat" (testDataDir </> "get-cat.golden") $ do
             WebClient{..} <- webClientM
-            response <- runClientM get env
-            isRight response @? "Should get result"
+            Right response <- runClientM get env
+            return . fromStrict . encodeUtf8 $ response
         ]
+
+testDataDir :: FilePath
+testDataDir = "test" </> "e2e" </> "Hangman" </> "Server" </> "testdata"

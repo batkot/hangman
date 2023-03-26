@@ -53,7 +53,7 @@ instance FromJSON CreateGameRequest
 
 instance ToSchema CreateGameRequest where
     declareNamedSchema proxy = genericDeclareNamedSchema defaultSchemaOptions proxy
-        & mapped.schema.description ?~ "Create new Hangman puzzle"
+        & mapped.schema.description ?~ "Create new Hangman puzzle. If empty string is given in body, game with random puzzle will be created"
         & mapped.schema.example ?~ toJSON (CreateGameRequest "PUZZLE")
 
 data GameDescriptionResponse = GameDescriptionResponse
