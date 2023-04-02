@@ -1,4 +1,4 @@
-name:                hangman-server
+name:                hangman-adapters
 version:             0.1.0.0
 github:              "batkot/hangman"
 license:             BSD3
@@ -17,24 +17,16 @@ extra-source-files:
 # To avoid duplicated efforts in documentation and dealing with the
 # complications of embedding Haddock markup inside cabal files, it is
 # common to point users to the README.md file.
-description:         Please see the README on GitHub at <https://github.com/batkot/hangman#readme>
+description:         Please see the README on GitHub at <https://github.com/githubuser/hangman-adapters#readme>
 
 dependencies:
 - base >= 4.7 && < 5
 - hangman
-- servant-server
-- servant-swagger
-- servant-swagger-ui
-- swagger2
-- text
 - transformers
+- mtl
 - unordered-containers
-- aeson
-- lens
 - uuid
 - extra
-- mtl
-- bytestring
 
 ghc-options:
 - -Wall
@@ -50,38 +42,13 @@ ghc-options:
 library:
   source-dirs: src
 
-executables:
-  hangman-server-exe:
-    main:                Main.hs
-    source-dirs:         app
-    ghc-options:
-    - -threaded
-    - -rtsopts
-    - -with-rtsopts=-N
-    dependencies:
-    - hangman-server
-    - hangman-adapters
-    - optparse-applicative
-    - warp
-
 tests:
-  e2e:
+  integration:
     main:                Spec.hs
-    source-dirs:         test/e2e
+    source-dirs:         test
     ghc-options:
     - -threaded
     - -rtsopts
     - -with-rtsopts=-N
     dependencies:
-    - hangman-server
-    - warp
-    - servant-client
-    - http-client
-    - http-types
-    - QuickCheck
-    - HUnit
-    - tasty
-    - tasty-quickcheck
-    - tasty-hunit
-    - tasty-golden
-    - filepath
+    - hangman-adapters

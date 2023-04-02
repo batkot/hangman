@@ -30,6 +30,7 @@ resolver: nightly-2023-03-23
 #   - wai
 packages:
 - hangman
+- hangman-adapters
 - hangman-server
 # Dependency packages to be pulled from upstream that are not in the resolver.
 # These entries can reference officially published versions as well as

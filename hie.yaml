@@ -6,6 +6,12 @@ cradle:
     - path: "hangman/test"
       component: "hangman:test:unit"
 
+    - path: "hangman-adapters/src"
+      component: "hangman-adapters:lib"
+
+    - path: "hangman-adapters/test"
+      component: "hangman-adapters:test:integration"
+
     - path: "hangman-server/src"
       component: "hangman-server:lib"
 
