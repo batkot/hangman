@@ -3,8 +3,8 @@ RUN mkdir /opt/build
 WORKDIR /opt/build
 
 COPY stack.yaml stack.yaml.lock /opt/build/
-COPY hangman/package.yaml /opt/build/hangman/
-COPY hangman-server/package.yaml /opt/build/hangman-server/
+COPY */package.yaml /opt/build/hangman/
+RUN ls /opt/build/hangman
 
 RUN stack build --dependencies-only
 
@@ -14,7 +14,7 @@ RUN stack build
 
 RUN cp -r "$(stack path --local-install-root)/bin" /opt/build/bin
 
-FROM archlinux:latest
+FROM ubuntu:latest
 WORKDIR /opt/server
 COPY --from=build-env /opt/build/bin .
 
