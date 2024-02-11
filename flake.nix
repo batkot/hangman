@@ -1,5 +1,5 @@
 {
-  description = "A very basic flake";
+  description = "Overengineered Hangman example";
 
   inputs = {
     nixpkgs.url     = "github:NixOS/nixpkgs";
