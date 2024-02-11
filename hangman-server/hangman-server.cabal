@@ -99,6 +99,7 @@ test-suite e2e
     , extra
     , filepath
     , hangman
+    , hangman-adapters
     , hangman-server
     , http-client
     , http-types

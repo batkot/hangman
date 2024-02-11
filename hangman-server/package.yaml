@@ -73,6 +73,7 @@ tests:
     - -rtsopts
     - -with-rtsopts=-N
     dependencies:
+    - hangman-adapters
     - hangman-server
     - warp
     - servant-client
