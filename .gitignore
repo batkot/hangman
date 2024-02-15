@@ -1,5 +1,6 @@
 .stack-work/
 *~
 .direnv
+.env.deployment
 dist-newstyle/
 result

@@ -10,6 +10,7 @@
     flake-utils.lib.eachDefaultSystem (system:
       let
         ghc = "ghc948";
+        gitRev = self.rev or "dirty";
         pkgs = import nixpkgs { inherit system; };
         slim-exec = pkg: pkgs.haskell.lib.justStaticExecutables pkg;
         haskellPkgs = pkgs.haskell.packages.${ghc}.override {
@@ -22,7 +23,7 @@
         };
         server-image = pkgs.dockerTools.buildImage {
           name = "hangman-server";
-          tag = self.rev or "dirty";
+          tag = gitRev;
           copyToRoot = [ hangman.server ];
           config = {
             Cmd = [ "hangman-server-exe" "-p 8080" ];
@@ -50,6 +51,9 @@
             ];
 
             withHoogle = false;
+            shellHook = ''
+                export GIT_REV=${gitRev}
+            '';
           };
         }
   );
