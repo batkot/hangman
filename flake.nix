@@ -9,7 +9,7 @@
   outputs = { self, nixpkgs, flake-utils }:
     flake-utils.lib.eachDefaultSystem (system:
       let
-        ghc = "ghc963";
+        ghc = "ghc948";
         pkgs = import nixpkgs { inherit system; };
         slim-exec = pkg: pkgs.haskell.lib.justStaticExecutables pkg;
         haskellPkgs = pkgs.haskell.packages.${ghc}.override {
