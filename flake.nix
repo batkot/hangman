@@ -9,16 +9,20 @@
   outputs = { self, nixpkgs, flake-utils }:
     flake-utils.lib.eachDefaultSystem (system:
       let
+        ghc = "ghc963";
         pkgs = import nixpkgs { inherit system; };
         slim = pkg: pkg.overrideAttrs (oldAttrs: {
           enableSharedExecutables = false;
           postFixup = "rm -rf $out/lib $out/nix-support $out/share/doc";
         });
-        haskellPkgs = pkgs.haskellPackages.extend (self: super: {
-            hangman = self.callCabal2nix "hangman" ./hangman {};
-            hangman-adapters = self.callCabal2nix "hangman-adapters" ./hangman-adapters {};
-            hangman-server = slim (self.callCabal2nix "hangman-server" ./hangman-server {});
-        });
+        haskellPkgs = pkgs.haskell.packages.${ghc}.override {
+            overrides = ghcSelf: ghcSuper: {
+                generics-sop = pkgs.haskell.lib.doJailbreak ghcSuper.generics-sop;
+                hangman = ghcSuper.callCabal2nix "hangman" ./hangman {};
+                hangman-adapters = ghcSuper.callCabal2nix "hangman-adapters" ./hangman-adapters {};
+                hangman-server = slim (ghcSuper.callCabal2nix "hangman-server" ./hangman-server {});
+            };
+        };
         server-image = pkgs.dockerTools.buildImage {
           name = "hangman-server";
           tag = self.rev or "dirty";
@@ -40,7 +44,7 @@
             default = hangman.server;
           };
 
-          devShells.default = pkgs.haskellPackages.shellFor {
+          devShells.default = haskellPkgs.shellFor {
             packages = p: [hangman.lib hangman.adapters hangman.server];
 
             buildInputs = with pkgs.haskellPackages; [
