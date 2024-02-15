@@ -11,16 +11,13 @@
       let
         ghc = "ghc963";
         pkgs = import nixpkgs { inherit system; };
-        slim = pkg: pkg.overrideAttrs (oldAttrs: {
-          enableSharedExecutables = false;
-          postFixup = "rm -rf $out/lib $out/nix-support $out/share/doc";
-        });
+        slim-exec = pkg: pkgs.haskell.lib.justStaticExecutables pkg;
         haskellPkgs = pkgs.haskell.packages.${ghc}.override {
             overrides = ghcSelf: ghcSuper: {
                 generics-sop = pkgs.haskell.lib.doJailbreak ghcSuper.generics-sop;
                 hangman = ghcSuper.callCabal2nix "hangman" ./hangman {};
                 hangman-adapters = ghcSuper.callCabal2nix "hangman-adapters" ./hangman-adapters {};
-                hangman-server = slim (ghcSuper.callCabal2nix "hangman-server" ./hangman-server {});
+                hangman-server = slim-exec (ghcSuper.callCabal2nix "hangman-server" ./hangman-server {});
             };
         };
         server-image = pkgs.dockerTools.buildImage {
