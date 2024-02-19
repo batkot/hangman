@@ -10,7 +10,6 @@
     flake-utils.lib.eachDefaultSystem (system:
       let
         ghc = "ghc963";
-        gitRev = self.rev or "dirty";
         overlays = final: prev: {
             elfutils = prev.elfutils.override {
                 # So that we won't end up with python3 in docker image...
@@ -31,9 +30,10 @@
                 hangman-server = slim-exec (ghcSuper.callCabal2nix "hangman-server" ./hangman-server {});
             };
         };
+        docker-image-tag = "flake-build";
         server-image = pkgs.dockerTools.buildImage {
           name = "hangman-server";
-          tag = gitRev;
+          tag = docker-image-tag;
           copyToRoot = [ hangman.server ];
           config = {
             Cmd = [ "hangman-server-exe" "-p 8080" ];
@@ -63,7 +63,7 @@
 
             withHoogle = false;
             shellHook = ''
-                export GIT_REV=${gitRev}
+                export FLAKE_IMAGE_TAG=${docker-image-tag}
             '';
           };
         }
