@@ -14,6 +14,12 @@ docker-image := 'server-image'
 default:
     @just --list
 
+hpack:
+    find -iname package.yaml | xargs -I '{}' hpack '{}'
+
+build: hpack
+    cabal build all
+
 build-image:
     nix build .#"hangman.server-docker" -o {{docker-image}}
 
