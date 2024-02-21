@@ -1,0 +1,4 @@
+services:
+    hangman-api:
+        image: hangman-server:latest
+        hostname: hangman-api
