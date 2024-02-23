@@ -66,6 +66,13 @@
         hooks = {
           stylish-haskell.enable = true;
           alejandra.enable = true;
+          just-fmt = {
+            enable = true;
+            name = "Just fmt";
+            entry = "find -iname justfile -exec ${pkgs.just}/bin/just --fmt --unstable -f {} \;";
+            files = "justfile";
+            pass_filenames = false;
+          };
         };
       };
     in {
