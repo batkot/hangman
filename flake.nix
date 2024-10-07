@@ -85,8 +85,9 @@
         packages = p: [hangman.lib hangman.adapters hangman.server];
 
         buildInputs = with pkgs.haskellPackages; [
-          haskell-language-server
           cabal-install
+          haskell-language-server
+          hpack
           pkgs.just
         ];
 

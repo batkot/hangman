@@ -19,6 +19,9 @@ hpack:
 build: hpack
     cabal build all
 
+run: build
+    cabal run hangman
+
 build-image:
     nix build ".#hangman.server-docker" -o {{ docker-image }}
 

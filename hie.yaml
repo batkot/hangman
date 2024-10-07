@@ -1,25 +1,2 @@
 cradle:
-  stack:
-    - path: "hangman/src"
-      component: "hangman:lib"
-
-    - path: "hangman/test"
-      component: "hangman:test:unit"
-
-    - path: "hangman-adapters/src"
-      component: "hangman-adapters:lib"
-
-    - path: "hangman-adapters/test"
-      component: "hangman-adapters:test:integration"
-
-    - path: "hangman-server/src"
-      component: "hangman-server:lib"
-
-    - path: "hangman-server/app/Main.hs"
-      component: "hangman-server:exe:hangman-server-exe"
-
-    - path: "hangman-server/app/Paths_hangman_server.hs"
-      component: "hangman-server:exe:hangman-server-exe"
-
-    - path: "hangman-server/test/e2e"
-      component: "hangman-server:test:e2e"
+  cabal:
