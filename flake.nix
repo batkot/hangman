@@ -84,12 +84,13 @@
       devShells.default = haskellPkgs.shellFor {
         packages = p: [hangman.lib hangman.adapters hangman.server];
 
-        buildInputs = with pkgs.haskellPackages; [
-          cabal-install
-          haskell-language-server
-          hpack
-          pkgs.just
-        ];
+        buildInputs =
+          (with pkgs; [just])
+          ++ (with haskellPkgs; [
+            cabal-install
+            haskell-language-server
+            hpack
+          ]);
 
         withHoogle = false;
         shellHook = ''
