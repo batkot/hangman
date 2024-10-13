@@ -20,7 +20,7 @@ build: hpack
     cabal build all
 
 run: build
-    cabal run hangman
+    cabal exec hangman-server-exe -- -p 8081
 
 build-image:
     nix build ".#hangman.server-docker" -o {{ docker-image }}
