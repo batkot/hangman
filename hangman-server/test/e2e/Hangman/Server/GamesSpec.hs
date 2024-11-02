@@ -13,7 +13,7 @@ import           Data.List.Extra                 (nubOrdOn)
 import           Data.Text                       (pack, unpack)
 import           GHC.Unicode                     (toUpper)
 import           Hangman.Model.Game              (GameState (..))
-import           Hangman.Server.Games            (CreateGameRequest (..),
+import           Hangman.Server.API.Games        (CreateGameRequest (..),
                                                   GameDescriptionResponse (..))
 import           Hangman.Server.Resources.WebApp (GamesClient (..),
                                                   WebClient (..))

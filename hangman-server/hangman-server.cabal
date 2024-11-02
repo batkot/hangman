@@ -92,7 +92,6 @@ test-suite e2e
   main-is: Spec.hs
   other-modules:
       Hangman.Server.GamesSpec
-      Hangman.Server.GetSpec
       Hangman.Server.Resources.WebApp
       Paths_hangman_server
   hs-source-dirs:
