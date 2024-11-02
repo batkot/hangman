@@ -12,6 +12,18 @@
         flake-utils.follows = "flake-utils";
       };
     };
+    web-view = {
+      url = "github:seanhess/web-view";
+      flake = false;
+    };
+    hyperbole = {
+      url = "github:seanhess/hyperbole?rev=68d6c65e4f7740c1d1ce78ca4758282b1393b6e5";
+      flake = false;
+    };
+    effectful = {
+      url = "github:haskell-effectful/effectful?rev=6e61d382240037df3234c6d68bccfe461bd4d8d0";
+      flake = false;
+    };
   };
 
   outputs = {
@@ -19,6 +31,9 @@
     nixpkgs,
     flake-utils,
     pre-commit-hooks,
+    web-view,
+    hyperbole,
+    effectful,
   }:
     flake-utils.lib.eachDefaultSystem (system: let
       ghc = "ghc963";
@@ -34,11 +49,16 @@
       };
       pkgs = import nixpkgs {
         inherit system;
+        config.allowBroken = true;
         overlays = [overlays];
       };
       slim-exec = pkg: pkgs.haskell.lib.justStaticExecutables pkg;
       haskellPkgs = pkgs.haskell.packages.${ghc}.override {
         overrides = ghcSelf: ghcSuper: {
+          web-view = pkgs.haskell.lib.dontCheck (pkgs.haskell.lib.doJailbreak (ghcSuper.callCabal2nix "web-view" web-view.outPath {}));
+          hyperbole = pkgs.haskell.lib.dontCheck (pkgs.haskell.lib.doJailbreak (ghcSuper.callCabal2nix "hyperbole" hyperbole.outPath {}));
+          effectful-core = pkgs.haskell.lib.dontCheck (pkgs.haskell.lib.doJailbreak (ghcSuper.callCabal2nix "effectful-core" (effectful.outPath + "/effectful-core") {}));
+          effectful = pkgs.haskell.lib.dontCheck (pkgs.haskell.lib.doJailbreak (ghcSuper.callCabal2nix "effectful" (effectful.outPath + "/effectful") {}));
           generics-sop = pkgs.haskell.lib.doJailbreak ghcSuper.generics-sop;
           hangman = ghcSuper.callCabal2nix "hangman" ./hangman {};
           hangman-adapters =

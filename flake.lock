@@ -1,5 +1,22 @@
 {
   "nodes": {
+    "effectful": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1694604132,
+        "narHash": "sha256-XiIdQ5Q+g8yBVNJeX6MlRg4q4OdBV7SWOMVAAg9eSSQ=",
+        "owner": "haskell-effectful",
+        "repo": "effectful",
+        "rev": "6e61d382240037df3234c6d68bccfe461bd4d8d0",
+        "type": "github"
+      },
+      "original": {
+        "owner": "haskell-effectful",
+        "repo": "effectful",
+        "rev": "6e61d382240037df3234c6d68bccfe461bd4d8d0",
+        "type": "github"
+      }
+    },
     "flake-compat": {
       "flake": false,
       "locked": {
@@ -55,6 +72,23 @@
         "type": "github"
       }
     },
+    "hyperbole": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1719949988,
+        "narHash": "sha256-zsajd7XPqr/VYjuB8T+R63NMNXayQabVrp5Sg6tumPk=",
+        "owner": "seanhess",
+        "repo": "hyperbole",
+        "rev": "68d6c65e4f7740c1d1ce78ca4758282b1393b6e5",
+        "type": "github"
+      },
+      "original": {
+        "owner": "seanhess",
+        "repo": "hyperbole",
+        "rev": "68d6c65e4f7740c1d1ce78ca4758282b1393b6e5",
+        "type": "github"
+      }
+    },
     "nixpkgs": {
       "locked": {
         "lastModified": 1708027459,
@@ -100,9 +134,12 @@
     },
     "root": {
       "inputs": {
+        "effectful": "effectful",
         "flake-utils": "flake-utils",
+        "hyperbole": "hyperbole",
         "nixpkgs": "nixpkgs",
-        "pre-commit-hooks": "pre-commit-hooks"
+        "pre-commit-hooks": "pre-commit-hooks",
+        "web-view": "web-view"
       }
     },
     "systems": {
@@ -117,6 +154,22 @@
       "original": {
         "owner": "nix-systems",
         "repo": "default",
+        "type": "github"
+      }
+    },
+    "web-view": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1719949554,
+        "narHash": "sha256-4liFP3nYvx+8DI8Z3/bF3Z9zzBtuNd6P1b+XJA8Ata0=",
+        "owner": "seanhess",
+        "repo": "web-view",
+        "rev": "ea203cdc1f9647ca9f3cf0399c577787d78e564b",
+        "type": "github"
+      },
+      "original": {
+        "owner": "seanhess",
+        "repo": "web-view",
         "type": "github"
       }
     }
