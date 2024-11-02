@@ -12,6 +12,7 @@
         flake-utils.follows = "flake-utils";
       };
     };
+    # TODO: Update flake
     web-view = {
       url = "github:seanhess/web-view";
       flake = false;
