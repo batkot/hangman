@@ -24,6 +24,7 @@ dependencies:
 - effectful
 - hangman
 - hyperbole
+- web-view
 - servant-server
 - servant-swagger
 - servant-swagger-ui

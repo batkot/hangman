@@ -52,6 +52,7 @@ library
     , transformers
     , unordered-containers
     , uuid
+    , web-view
   default-language: Haskell2010
 
 executable hangman-server-exe
@@ -83,6 +84,7 @@ executable hangman-server-exe
     , unordered-containers
     , uuid
     , warp
+    , web-view
   default-language: Haskell2010
 
 test-suite e2e
@@ -127,4 +129,5 @@ test-suite e2e
     , unordered-containers
     , uuid
     , warp
+    , web-view
   default-language: Haskell2010
