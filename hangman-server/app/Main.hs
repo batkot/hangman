@@ -27,7 +27,7 @@ main = do
     createApp >>= run (port opt)
   where
     options = info (optionParser <**> helper)
-        (fullDesc <> progDesc "Run Foo Server")
+        (fullDesc <> progDesc "Run Hangman Server")
     createApp = do
        ioRef <- newIORef empty
        return $ application (runConstPuzzleGenT (fromList "PUZZLE") . runInMemoryGameStorageT ioRef)

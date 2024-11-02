@@ -26,7 +26,9 @@ source-repository head
 library
   exposed-modules:
       Hangman.Server
-      Hangman.Server.Games
+      Hangman.Server.API
+      Hangman.Server.API.Games
+      Hangman.Server.UI
   other-modules:
       Paths_hangman_server
   hs-source-dirs:

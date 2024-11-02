@@ -6,7 +6,7 @@
 {-# LANGUAGE OverloadedStrings  #-}
 {-# LANGUAGE TypeOperators      #-}
 
-module Hangman.Server.Games
+module Hangman.Server.API.Games
     ( Api
     , api
     , CreateGameRequest(..)
