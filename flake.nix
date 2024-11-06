@@ -51,9 +51,14 @@
       pkgs = import nixpkgs {
         inherit system;
         config.allowBroken = true;
-        overlays = [overlays];
+        # overlays = [overlays];
       };
       slim-exec = pkg: pkgs.haskell.lib.justStaticExecutables pkg;
+      slim = pkg:
+        pkg.overrideAttrs (oldAttrs: {
+          enableSharedExecutables = false;
+          postFixup = "rm -rf $out/lib $out/nix-support $out/share/doc";
+        });
       haskellPkgs = pkgs.haskell.packages.${ghc}.override {
         overrides = ghcSelf: ghcSuper: {
           web-view = pkgs.haskell.lib.dontCheck (pkgs.haskell.lib.doJailbreak (ghcSuper.callCabal2nix "web-view" web-view.outPath {}));
@@ -65,7 +70,7 @@
           hangman-adapters =
             ghcSuper.callCabal2nix "hangman-adapters" ./hangman-adapters {};
           hangman-server =
-            slim-exec
+            slim
             (ghcSuper.callCabal2nix "hangman-server" ./hangman-server {});
         };
       };
