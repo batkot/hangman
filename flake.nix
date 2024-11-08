@@ -2,7 +2,7 @@
   description = "Overengineered Hangman example";
 
   inputs = {
-    nixpkgs.url = "github:NixOS/nixpkgs";
+    nixpkgs.url = "github:NixOS/nixpkgs?rev=4a817d2083d6cd7068dc55511fbf90f84653b301";
     flake-utils.url = "github:numtide/flake-utils";
     pre-commit-hooks = {
       url = "github:cachix/pre-commit-hooks.nix";
@@ -21,10 +21,6 @@
       url = "github:seanhess/hyperbole?rev=68d6c65e4f7740c1d1ce78ca4758282b1393b6e5";
       flake = false;
     };
-    effectful = {
-      url = "github:haskell-effectful/effectful?rev=6e61d382240037df3234c6d68bccfe461bd4d8d0";
-      flake = false;
-    };
   };
 
   outputs = {
@@ -34,10 +30,9 @@
     pre-commit-hooks,
     web-view,
     hyperbole,
-    effectful,
   }:
     flake-utils.lib.eachDefaultSystem (system: let
-      ghc = "ghc963";
+      ghc = "ghc982";
       overlays = final: prev: {
         elfutils = prev.elfutils.override {
           # So that we won't end up with python3 in docker image...
@@ -61,11 +56,11 @@
         });
       haskellPkgs = pkgs.haskell.packages.${ghc}.override {
         overrides = ghcSelf: ghcSuper: {
+          fast-logger = pkgs.haskell.lib.dontCheck (pkgs.haskell.lib.doJailbreak ghcSuper.fast-logger);
+          websockets = pkgs.haskell.lib.dontCheck (pkgs.haskell.lib.doJailbreak ghcSuper.websockets);
+          scotty = pkgs.haskell.lib.dontCheck (pkgs.haskell.lib.doJailbreak ghcSuper.scotty);
           web-view = pkgs.haskell.lib.dontCheck (pkgs.haskell.lib.doJailbreak (ghcSuper.callCabal2nix "web-view" web-view.outPath {}));
           hyperbole = pkgs.haskell.lib.dontCheck (pkgs.haskell.lib.doJailbreak (ghcSuper.callCabal2nix "hyperbole" hyperbole.outPath {}));
-          effectful-core = pkgs.haskell.lib.dontCheck (pkgs.haskell.lib.doJailbreak (ghcSuper.callCabal2nix "effectful-core" (effectful.outPath + "/effectful-core") {}));
-          effectful = pkgs.haskell.lib.dontCheck (pkgs.haskell.lib.doJailbreak (ghcSuper.callCabal2nix "effectful" (effectful.outPath + "/effectful") {}));
-          generics-sop = pkgs.haskell.lib.doJailbreak ghcSuper.generics-sop;
           hangman = ghcSuper.callCabal2nix "hangman" ./hangman {};
           hangman-adapters =
             ghcSuper.callCabal2nix "hangman-adapters" ./hangman-adapters {};
