@@ -38,7 +38,14 @@ ui = pure hyperApp
 landingPage :: Hyperbole.View c ()
 landingPage = pageContainer $ do
     Hyperbole.el_ hangmanLabel
-    -- Hyperbole.route NewGame id "Random"
+    Hyperbole.link "/swagger-ui" landingLink "API"
+  where
+    landingLink =
+      WView.addClass
+        (WView.cls "link"
+          & WView.prop "font-size" ("3rem" :: Text)
+          & WView.prop "display" ("block" :: Text))
+      . WView.hover (WView.bg ("000" :: Hyperbole.HexColor) . WView.color ("FFF" :: Hyperbole.HexColor))
 
 pageContainer :: Hyperbole.View c () -> Hyperbole.View c ()
 pageContainer page = do
