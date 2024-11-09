@@ -1,24 +1,32 @@
+{-# LANGUAGE DataKinds            #-}
+{-# LANGUAGE FlexibleContexts     #-}
 {-# LANGUAGE FlexibleInstances    #-}
 {-# LANGUAGE GADTs                #-}
+{-# LANGUAGE KindSignatures       #-}
 {-# LANGUAGE LambdaCase           #-}
+{-# LANGUAGE TypeFamilies         #-}
+{-# LANGUAGE TypeOperators        #-}
 {-# LANGUAGE UndecidableInstances #-}
 
 module Hangman.Read.Game
     ( GameDescription(..)
-    , GameReadMonad(..)
     , describeGame
+    , findGameDescription
+    , GameReadEffect(..)
     ) where
 
-import           Hangman.Model.Game        (Game (..), GameId, GameState (..))
-import           Hangman.Model.PositiveInt (PositiveInt)
-import           Hangman.Named             (Named)
+import           Hangman.Model.Game         (Game (..), GameId, GameState (..))
+import           Hangman.Model.PositiveInt  (PositiveInt)
+import           Hangman.Named              (Named)
 
-import           Control.Monad.Trans.Class (MonadTrans, lift)
-import           Data.Foldable             (toList)
-import           Data.List                 (intersperse)
-import           Data.Maybe                (fromMaybe)
-import           Data.Text                 (Text, pack)
-import           Hangman.Model.Puzzle      (describePuzzle, getSolution)
+import           Data.Foldable              (toList)
+import           Data.List                  (intersperse)
+import           Data.Maybe                 (fromMaybe)
+import           Data.Text                  (Text, pack)
+import           Effectful                  (Dispatch (Dynamic), DispatchOf,
+                                             Eff, Effect, (:>))
+import           Effectful.Dispatch.Dynamic (send)
+import           Hangman.Model.Puzzle       (describePuzzle, getSolution)
 
 data GameDescription gameId = GameDescription
     { id          :: Named gameId GameId
@@ -27,14 +35,13 @@ data GameDescription gameId = GameDescription
     , puzzle      :: Text
     }
 
-class Monad m => GameReadMonad m where
-    findGameDescription :: Named gameId GameId -> m (Maybe (GameDescription gameId))
+data GameReadEffect :: Effect where
+  FindGameDescription :: Named gameId GameId -> GameReadEffect m (Maybe (GameDescription gameId))
 
-instance {-# OVERLAPPABLE #-}
-    ( GameReadMonad m
-    , MonadTrans t
-    , Monad (t m)) => GameReadMonad (t m) where
-  findGameDescription = lift . findGameDescription
+type instance DispatchOf GameReadEffect = Dynamic
+
+findGameDescription :: GameReadEffect :> es => Named gameId GameId -> Eff es (Maybe (GameDescription gameId))
+findGameDescription = send . FindGameDescription
 
 describeGame :: Named gameId GameId -> Game gameId state -> GameDescription gameId
 describeGame gameId = \case

@@ -8,27 +8,28 @@ module Hangman.Server.API (api, Api, ApiSwag) where
 
 
 import           Data.Proxy                (Proxy (..))
-import           Servant                   (ServerError, (:<|>) (..), (:>))
+import qualified Servant                   as S
+import           Servant                   (ServerError, (:<|>) (..))
 import           Servant.Server            (ServerT)
 import           Servant.Swagger           (toSwagger)
 import           Servant.Swagger.UI        (SwaggerSchemaUI,
                                             swaggerSchemaUIServerT)
 
-import           Control.Monad.Error.Class (MonadError)
-import           Control.Monad.IO.Class    (MonadIO)
-import           Hangman.Application.Ports (GameMonad, PuzzleGeneratorMonad)
-import           Hangman.Read.Game         (GameReadMonad)
+import           Hangman.Application.Ports (GameEffect, PuzzleGeneratorEffect)
+import           Hangman.Read.Game         (GameReadEffect)
 
+import           Effectful                 (Eff, IOE, (:>))
+import           Effectful.Error.Dynamic   (Error)
 import qualified Hangman.Server.API.Games  as Games
 
-type Api = "games" :> Games.Api
+type Api = "games" S.:> Games.Api
 type ApiSwag = SwaggerSchemaUI "swagger-ui" "swagger.json" :<|> Api
 
 api
-    :: GameMonad m
-    => GameReadMonad m
-    => PuzzleGeneratorMonad m
-    => MonadIO m
-    => MonadError ServerError m
-    => ServerT ApiSwag m
+    :: GameEffect :> es
+    => GameReadEffect :> es
+    => PuzzleGeneratorEffect :> es
+    => IOE :> es
+    => Error ServerError :> es
+    => ServerT ApiSwag (Eff es)
 api = swaggerSchemaUIServerT (toSwagger @Api Proxy) :<|> Games.api

@@ -38,7 +38,7 @@ ui = pure hyperApp
 landingPage :: Hyperbole.View c ()
 landingPage = pageContainer $ do
     Hyperbole.el_ hangmanLabel
-    Hyperbole.route NewGame id "Random"
+    -- Hyperbole.route NewGame id "Random"
 
 pageContainer :: Hyperbole.View c () -> Hyperbole.View c ()
 pageContainer page = do

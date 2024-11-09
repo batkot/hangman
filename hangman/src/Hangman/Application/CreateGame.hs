@@ -1,28 +1,30 @@
 {-# LANGUAGE DerivingStrategies #-}
+{-# LANGUAGE FlexibleContexts   #-}
+{-# LANGUAGE TypeOperators      #-}
 
 module Hangman.Application.CreateGame
     ( createGame
     , createRandomGame
     ) where
 
-import           Hangman.Application.Ports (GameMonad (..),
-                                            PuzzleGeneratorMonad (nextPuzzle))
+import           Effectful                 (Eff, (:>))
+import           Hangman.Application.Ports (GameEffect, PuzzleGeneratorEffect,
+                                            nextPuzzle, saveGame)
 import           Hangman.Model.Game        (Chances, GameId, createNewGame)
 import           Hangman.Model.Puzzle      (Solution)
 import           Hangman.Named             (name)
 
-createGame :: GameMonad m => GameId -> Chances -> Solution -> m ()
+createGame :: (GameEffect :> es) => GameId -> Chances -> Solution -> Eff es ()
 createGame gameId chances solution =
     name gameId $ \namedGameId ->
         saveGame namedGameId $ createNewGame solution chances
 
 createRandomGame
-    :: PuzzleGeneratorMonad m
-    => GameMonad m
+    :: PuzzleGeneratorEffect :> es
+    => GameEffect :> es
     => GameId
     -> Chances
-    -> m ()
+    -> Eff es ()
 createRandomGame gameId chances = do
     solution <- nextPuzzle
     createGame gameId chances solution
-

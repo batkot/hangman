@@ -1,12 +1,17 @@
 module Main (main) where
 
-import           Hangman.Adapters.InMemory (runConstPuzzleGenT,
-                                            runInMemoryGameStorageT)
+import           Hangman.Adapters.InMemory (runConstPuzzleGen,
+                                            runGameEffectInMem,
+                                            runGameReadEffectInMem)
 import           Hangman.Server            (application)
 
+import qualified Control.Monad.Except      as E
+import           Control.Monad.IO.Class    (liftIO)
 import           Data.HashMap.Strict       (empty)
 import           Data.IORef                (newIORef)
 import           Data.List.NonEmpty        (fromList)
+import           Effectful                 (runEff)
+import           Effectful.Error.Dynamic   (runErrorNoCallStack)
 import           Network.Wai.Handler.Warp  (run)
 import           Options.Applicative       (Parser, auto, execParser, fullDesc,
                                             help, helper, info, long, metavar,
@@ -30,4 +35,7 @@ main = do
         (fullDesc <> progDesc "Run Hangman Server")
     createApp = do
        ioRef <- newIORef empty
-       return $ application (runConstPuzzleGenT (fromList "PUZZLE") . runInMemoryGameStorageT ioRef)
+       return $ application $ runEffectful ioRef
+    runEffectful ioRef eff = do
+      res <- liftIO . runEff . runErrorNoCallStack . runConstPuzzleGen (fromList "PUZZLE") . runGameEffectInMem ioRef. runGameReadEffectInMem ioRef $ eff
+      E.liftEither res

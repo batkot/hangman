@@ -9,11 +9,15 @@ import           Hangman.Server            (application)
 import           Hangman.Server.API        (Api)
 
 import           Control.Concurrent        (ThreadId, forkIO, killThread)
+import qualified Control.Monad.Except      as E
+import           Control.Monad.IO.Class    (liftIO)
 import           Data.HashMap.Strict       (empty)
 import           Data.IORef                (newIORef)
 import           Data.List.NonEmpty        (fromList)
 import           Data.Proxy                (Proxy (..))
 import           Data.Text                 (Text)
+import           Effectful                 (runEff)
+import           Effectful.Error.Dynamic   (runErrorNoCallStack)
 import           Hangman.Adapters.InMemory
 import           Hangman.Server.API.Games  (CreateGameRequest (..),
                                             GameDescriptionResponse (..))
@@ -55,8 +59,12 @@ createWebApp :: IO WebAppHandle
 createWebApp = do
     (port, socket) <- Warp.openFreePort
     gamesIoRef <- newIORef empty
-    threadId <- forkIO $ Warp.runSettingsSocket Warp.defaultSettings socket $ application (runConstPuzzleGenT (fromList "PUZZLE") . runInMemoryGameStorageT gamesIoRef)
+    threadId <- forkIO $ Warp.runSettingsSocket Warp.defaultSettings socket $ application $ runEffectful gamesIoRef
     return (WebAppHandle (port, threadId))
+  where
+    runEffectful ioRef eff = do
+      res <- liftIO . runEff . runErrorNoCallStack . runConstPuzzleGen (fromList "PUZZLE") . runGameEffectInMem ioRef. runGameReadEffectInMem ioRef $ eff
+      E.liftEither res
 
 destroyWebApp :: WebAppHandle -> IO ()
 destroyWebApp = killThread . snd . unHandle
