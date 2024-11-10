@@ -1,9 +1,12 @@
-{-# LANGUAGE DeriveAnyClass     #-}
-{-# LANGUAGE DeriveGeneric      #-}
-{-# LANGUAGE DerivingStrategies #-}
-{-# LANGUAGE FlexibleContexts   #-}
-{-# LANGUAGE OverloadedStrings  #-}
-{-# LANGUAGE TypeOperators      #-}
+{-# LANGUAGE AllowAmbiguousTypes #-}
+{-# LANGUAGE DataKinds           #-}
+{-# LANGUAGE DeriveAnyClass      #-}
+{-# LANGUAGE DeriveGeneric       #-}
+{-# LANGUAGE DerivingStrategies  #-}
+{-# LANGUAGE FlexibleContexts    #-}
+{-# LANGUAGE OverloadedStrings   #-}
+{-# LANGUAGE TypeApplications    #-}
+{-# LANGUAGE TypeOperators       #-}
 module Hangman.Server.UI (ui, UI) where
 
 import           Servant        (Raw)
@@ -31,8 +34,8 @@ ui = pure hyperApp
   where
     hyperApp = Hyperbole.liveApp (Hyperbole.basicDocument hangmanLabel) (Hyperbole.routeRequest router)
     router :: Hyperbole.Hyperbole :> es => AppRoute -> Hyperbole.Eff es Hyperbole.Response
-    router Landing = Hyperbole.page $ Hyperbole.load $ pure landingPage
-    router NewGame = Hyperbole.page $ Hyperbole.load $ pure createGamePage
+    router Landing = Hyperbole.page $ Hyperbole.load @_ @'[] $ pure landingPage
+    router NewGame = Hyperbole.page $ Hyperbole.load @_ @'[] $ pure createGamePage
 
 landingPage :: Hyperbole.View c ()
 landingPage = pageContainer $ do

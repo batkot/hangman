@@ -18,7 +18,7 @@
       flake = false;
     };
     hyperbole = {
-      url = "github:seanhess/hyperbole?rev=68d6c65e4f7740c1d1ce78ca4758282b1393b6e5";
+      url = "github:seanhess/hyperbole?rev=ff28b402bf10e8011af9670512e43601d9fdd7f8";
       flake = false;
     };
   };

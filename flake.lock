@@ -58,17 +58,17 @@
     "hyperbole": {
       "flake": false,
       "locked": {
-        "lastModified": 1719949988,
-        "narHash": "sha256-zsajd7XPqr/VYjuB8T+R63NMNXayQabVrp5Sg6tumPk=",
+        "lastModified": 1727805630,
+        "narHash": "sha256-T6yox11ny3ns7tS/lmu9Rxo/VRfq/CpPd+Ec+lYKXxA=",
         "owner": "seanhess",
         "repo": "hyperbole",
-        "rev": "68d6c65e4f7740c1d1ce78ca4758282b1393b6e5",
+        "rev": "ff28b402bf10e8011af9670512e43601d9fdd7f8",
         "type": "github"
       },
       "original": {
         "owner": "seanhess",
         "repo": "hyperbole",
-        "rev": "68d6c65e4f7740c1d1ce78ca4758282b1393b6e5",
+        "rev": "ff28b402bf10e8011af9670512e43601d9fdd7f8",
         "type": "github"
       }
     },
