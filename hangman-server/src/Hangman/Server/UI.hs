@@ -1,5 +1,9 @@
-{-# LANGUAGE DeriveGeneric     #-}
-{-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE DeriveAnyClass     #-}
+{-# LANGUAGE DeriveGeneric      #-}
+{-# LANGUAGE DerivingStrategies #-}
+{-# LANGUAGE FlexibleContexts   #-}
+{-# LANGUAGE OverloadedStrings  #-}
+{-# LANGUAGE TypeOperators      #-}
 module Hangman.Server.UI (ui, UI) where
 
 import           Servant        (Raw)
@@ -8,6 +12,7 @@ import           Servant.Server (ServerT)
 import           Data.Function  ((&))
 import           Data.String    (IsString)
 import           Data.Text      (Text)
+import           Effectful      ((:>))
 import           GHC.Generics   (Generic)
 import qualified Web.Hyperbole  as Hyperbole
 import           Web.Hyperbole  (Route (..))
@@ -18,26 +23,21 @@ type UI = Raw
 data AppRoute
   = Landing
   | NewGame
-  deriving (Eq,Generic)
-
-instance Route AppRoute where
+  deriving stock (Eq,Generic)
+  deriving anyclass (Route)
 
 ui :: ServerT UI m
 ui = pure hyperApp
   where
     hyperApp = Hyperbole.liveApp (Hyperbole.basicDocument hangmanLabel) (Hyperbole.routeRequest router)
-    landing = Hyperbole.load $ pure landingPage
-    test = Hyperbole.load $ pure $ do
-      pageContainer $ Hyperbole.el_ "Game placeholder!"
-
-    -- router :: AppRoute -> Hyperbole.Eff fx Hyperbole.Response
-    router Landing = Hyperbole.page landing
-    router NewGame = Hyperbole.page test
-
+    router :: Hyperbole.Hyperbole :> es => AppRoute -> Hyperbole.Eff es Hyperbole.Response
+    router Landing = Hyperbole.page $ Hyperbole.load $ pure landingPage
+    router NewGame = Hyperbole.page $ Hyperbole.load $ pure createGamePage
 
 landingPage :: Hyperbole.View c ()
 landingPage = pageContainer $ do
     Hyperbole.el_ hangmanLabel
+    Hyperbole.route NewGame landingLink "New Game"
     Hyperbole.link "/swagger-ui" landingLink "API"
   where
     landingLink =
@@ -46,6 +46,10 @@ landingPage = pageContainer $ do
           & WView.prop "font-size" ("3rem" :: Text)
           & WView.prop "display" ("block" :: Text))
       . WView.hover (WView.bg ("000" :: Hyperbole.HexColor) . WView.color ("FFF" :: Hyperbole.HexColor))
+
+createGamePage :: Hyperbole.View c ()
+createGamePage = pageContainer $
+  Hyperbole.el_ "Create new game"
 
 pageContainer :: Hyperbole.View c () -> Hyperbole.View c ()
 pageContainer page = do
