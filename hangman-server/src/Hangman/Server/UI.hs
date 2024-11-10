@@ -1,3 +1,4 @@
+{-# OPTIONS_GHC -Wno-orphans #-}
 {-# LANGUAGE AllowAmbiguousTypes   #-}
 {-# LANGUAGE DataKinds             #-}
 {-# LANGUAGE DeriveAnyClass        #-}
@@ -24,7 +25,7 @@ import           Data.String                    (IsString)
 import           Data.Text                      (Text)
 import qualified Data.Text                      as T
 import           Data.Tuple.Extra               (dupe)
-import           Data.UUID                      (toText)
+import qualified Data.UUID                      as UUID
 import           Effectful                      (Eff, IOE, (:>))
 import           GHC.Generics                   (Generic)
 import           Hangman.Application.CreateGame (createGame)
@@ -32,19 +33,29 @@ import           Hangman.Application.Ports      (GameEffect,
                                                  PuzzleGeneratorEffect)
 import           Hangman.Model.Game             (GameId (..))
 import qualified Hangman.Model.PositiveInt      as PositiveInt
-import           Hangman.Read.Game              (GameReadEffect)
+import           Hangman.Read.Game              (GameReadEffect, findGameDescription, GameDescription, puzzle)
 import qualified Web.Hyperbole                  as Hyperbole
-import           Web.Hyperbole                  (Route (..))
+import           Web.Hyperbole.Route            (Route (..))
 import           Web.Hyperbole.Forms            (Field)
 import qualified Web.View.Style                 as WView
+import Hangman.Named
 
 type UI = Raw
 
 data AppRoute
   = Landing
   | NewGame
+  | Play GameId
   deriving stock (Eq,Generic)
   deriving anyclass (Route)
+
+instance Route GameId where
+  defRoute = GameId $ UUID.fromWords 0 0 0 0
+
+  matchRoute [segment] = GameId <$> UUID.fromText segment
+  matchRoute _ = Nothing
+
+  routePath (GameId gameId) = pure $ UUID.toText gameId
 
 type RunEff = forall es x. IOE :> es => Eff (GameEffect : GameReadEffect : PuzzleGeneratorEffect : es) x -> Eff es x
 
@@ -52,9 +63,10 @@ ui :: RunEff -> ServerT UI m
 ui runEff = pure hyperApp
   where
     hyperApp = Hyperbole.liveApp (Hyperbole.basicDocument hangmanLabel) (runEff $ Hyperbole.routeRequest router)
-    router :: GameEffect :> es => Hyperbole.Hyperbole :> es => AppRoute -> Hyperbole.Eff es Hyperbole.Response
+    router :: GameReadEffect :> es => GameEffect :> es => Hyperbole.Hyperbole :> es => AppRoute -> Hyperbole.Eff es Hyperbole.Response
     router Landing = Hyperbole.page $ Hyperbole.load @_ @'[] $ pure landingPage
     router NewGame = Hyperbole.page createGamePage
+    router (Play gameId) = Hyperbole.page $ playGamePage gameId
 
 landingPage :: Hyperbole.View c ()
 landingPage = pageContainer $ do
@@ -93,8 +105,8 @@ createGameAction _ CreateGame = do
   if Hyperbole.anyInvalid formValidation
     then pure $ createGameFormView formValidation
     else do
-      GameId newGameId <- createGame PositiveInt.one $ NE.fromList $ T.unpack $ solution createGameForm
-      pure $ Hyperbole.text $ "Created game: " <> toText newGameId
+      newGameId <- createGame PositiveInt.one $ NE.fromList $ T.unpack $ solution createGameForm
+      Hyperbole.redirect $ Hyperbole.routeUrl $ Play newGameId
   where
     validateForm :: CreateGameForm Identity -> CreateGameForm Hyperbole.Validated
     validateForm (CreateGameForm solution) =
@@ -126,6 +138,18 @@ createGameFormView x = do
       WView.addClass
         (WView.cls "link"
           & WView.prop "font-size" ("3rem" :: Text))
+
+
+playGamePage :: GameReadEffect :> es => Hyperbole.Hyperbole :> es => GameId -> Hyperbole.Page es '[]
+playGamePage gameId = do
+  Hyperbole.load $ do
+    name gameId $ \gId -> do
+      gameDescription <- findGameDescription gId
+      pure $ pageContainer $ Hyperbole.el_ $ maybe "Not found" playGameView gameDescription
+
+playGameView :: GameDescription gameId -> Hyperbole.View c ()
+playGameView gameDescription = do
+  Hyperbole.el_ $ Hyperbole.text $ puzzle gameDescription
 
 pageContainer :: Hyperbole.View c () -> Hyperbole.View c ()
 pageContainer page = do
