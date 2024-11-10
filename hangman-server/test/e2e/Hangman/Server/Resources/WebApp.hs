@@ -1,3 +1,4 @@
+{-# LANGUAGE FlexibleContexts #-}
 {-# LANGUAGE TypeApplications #-}
 module Hangman.Server.Resources.WebApp
     ( WebClient(..)
@@ -62,9 +63,7 @@ createWebApp = do
     threadId <- forkIO $ Warp.runSettingsSocket Warp.defaultSettings socket $ application $ runEffectful gamesIoRef
     return (WebAppHandle (port, threadId))
   where
-    runEffectful ioRef eff = do
-      res <- liftIO . runEff . runErrorNoCallStack . runConstPuzzleGen (fromList "PUZZLE") . runGameEffectInMem ioRef. runGameReadEffectInMem ioRef $ eff
-      E.liftEither res
+    runEffectful ioRef = runConstPuzzleGen (fromList "PUZZLE"). runGameReadEffectInMem ioRef . runGameEffectInMem ioRef
 
 destroyWebApp :: WebAppHandle -> IO ()
 destroyWebApp = killThread . snd . unHandle

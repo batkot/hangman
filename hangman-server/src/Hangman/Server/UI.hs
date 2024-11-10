@@ -14,31 +14,38 @@
 
 module Hangman.Server.UI (ui, UI) where
 
-import           Servant                        (Raw)
-import           Servant.Server                 (ServerT)
+import           Servant                         (Raw)
+import           Servant.Server                  (ServerT)
 
-import           Control.Monad.Identity         (Identity)
-import           Data.Bifunctor                 (second)
-import           Data.Function                  ((&))
-import qualified Data.List.NonEmpty             as NE
-import           Data.String                    (IsString)
-import           Data.Text                      (Text)
-import qualified Data.Text                      as T
-import           Data.Tuple.Extra               (dupe)
-import qualified Data.UUID                      as UUID
-import           Effectful                      (Eff, IOE, (:>))
-import           GHC.Generics                   (Generic)
-import           Hangman.Application.CreateGame (createGame)
-import           Hangman.Application.Ports      (GameEffect,
-                                                 PuzzleGeneratorEffect)
-import           Hangman.Model.Game             (GameId (..))
-import qualified Hangman.Model.PositiveInt      as PositiveInt
-import           Hangman.Read.Game              (GameReadEffect, findGameDescription, GameDescription, puzzle)
-import qualified Web.Hyperbole                  as Hyperbole
-import           Web.Hyperbole.Route            (Route (..))
-import           Web.Hyperbole.Forms            (Field)
-import qualified Web.View.Style                 as WView
-import Hangman.Named
+import           Control.Monad                   (forM_)
+import           Control.Monad.Identity          (Identity)
+import           Data.Bifunctor                  (second)
+import           Data.Function                   ((&))
+import qualified Data.List.NonEmpty              as NE
+import           Data.String                     (IsString)
+import           Data.Text                       (Text)
+import qualified Data.Text                       as T
+import           Data.Tuple.Extra                (dupe)
+import qualified Data.UUID                       as UUID
+import           Effectful                       (Eff, IOE, (:>))
+import           Effectful.Error.Dynamic         (runErrorNoCallStackWith)
+import           GHC.Generics                    (Generic)
+import           Hangman.Application.CreateGame  (createGame)
+import           Hangman.Application.GuessLetter (GuessLetterError (..),
+                                                  guessLetter)
+import           Hangman.Application.Ports       (GameEffect,
+                                                  PuzzleGeneratorEffect)
+import           Hangman.Model.Game              (GameId (..), GameState (..))
+import qualified Hangman.Model.PositiveInt       as PositiveInt
+import           Hangman.Named
+import           Hangman.Read.Game               (GameDescription,
+                                                  GameReadEffect, chancesLeft,
+                                                  findGameDescription, puzzle,
+                                                  state)
+import qualified Web.Hyperbole                   as Hyperbole
+import           Web.Hyperbole.Forms             (Field)
+import           Web.Hyperbole.Route             (Route (..))
+import qualified Web.View.Style                  as WView
 
 type UI = Raw
 
@@ -53,7 +60,7 @@ instance Route GameId where
   defRoute = GameId $ UUID.fromWords 0 0 0 0
 
   matchRoute [segment] = GameId <$> UUID.fromText segment
-  matchRoute _ = Nothing
+  matchRoute _         = Nothing
 
   routePath (GameId gameId) = pure $ UUID.toText gameId
 
@@ -105,7 +112,8 @@ createGameAction _ CreateGame = do
   if Hyperbole.anyInvalid formValidation
     then pure $ createGameFormView formValidation
     else do
-      newGameId <- createGame PositiveInt.one $ NE.fromList $ T.unpack $ solution createGameForm
+      let ten = foldr ($) PositiveInt.one $ replicate 9 PositiveInt.increment
+      newGameId <- createGame ten $ NE.fromList $ T.unpack $ solution createGameForm
       Hyperbole.redirect $ Hyperbole.routeUrl $ Play newGameId
   where
     validateForm :: CreateGameForm Identity -> CreateGameForm Hyperbole.Validated
@@ -136,20 +144,53 @@ createGameFormView x = do
           & WView.prop "color" ("#f77" :: Text))
     fontSize =
       WView.addClass
-        (WView.cls "link"
+        (WView.cls "font"
           & WView.prop "font-size" ("3rem" :: Text))
 
+data PlayGame = PlayGame
+  deriving stock (Read, Show)
+  deriving anyclass (Hyperbole.ViewId)
 
-playGamePage :: GameReadEffect :> es => Hyperbole.Hyperbole :> es => GameId -> Hyperbole.Page es '[]
+newtype PlayGameAction = Guess Char
+  deriving stock (Read, Show)
+  deriving anyclass (Hyperbole.ViewAction)
+
+instance Hyperbole.HyperView PlayGame where
+  type Action PlayGame = PlayGameAction
+
+playGamePage :: GameEffect :> es => GameReadEffect :> es => Hyperbole.Hyperbole :> es => GameId -> Hyperbole.Page es '[PlayGame]
 playGamePage gameId = do
-  Hyperbole.load $ do
+  Hyperbole.handle (playGame gameId) $ Hyperbole.load $ do
     name gameId $ \gId -> do
       gameDescription <- findGameDescription gId
-      pure $ pageContainer $ Hyperbole.el_ $ maybe "Not found" playGameView gameDescription
+      pure $ Hyperbole.hyper PlayGame $
+          pageContainer $ maybe "Not found" playGameView gameDescription
 
-playGameView :: GameDescription gameId -> Hyperbole.View c ()
+playGame :: GameReadEffect :> es => GameEffect :> es => Hyperbole.Hyperbole :> es => GameId -> PlayGame -> PlayGameAction -> Eff es (Hyperbole.View PlayGame ())
+playGame gameId PlayGame (Guess char) = do
+  runErrorNoCallStackWith (\(GameNotFound _) -> pure ()) $ guessLetter gameId char
+  name gameId $ \gId -> do
+    gameDescription <- findGameDescription gId
+    pure $ pageContainer $ Hyperbole.el_ $ maybe "Not found" playGameView gameDescription
+
+playGameView :: GameDescription gameId -> Hyperbole.View PlayGame ()
 playGameView gameDescription = do
+  Hyperbole.el_ $ Hyperbole.text $ maybe gameEnding (T.pack . show . PositiveInt.toInt) $ chancesLeft gameDescription
   Hyperbole.el_ $ Hyperbole.text $ puzzle gameDescription
+  forM_ ['A'..'Z'] keyboardBtn
+  where
+    gameEnding =
+      case state gameDescription of
+        Won  -> "WON"
+        Lost -> "DEAD"
+        _    -> ""
+    keyboardBtn char = Hyperbole.button (Guess char) keyboardStyle $ Hyperbole.text $ T.pack [char]
+    keyboardStyle =
+      WView.addClass
+        (WView.cls "keyboard-btn"
+          & WView.prop "font-size" ("2rem" :: Text)
+          & WView.prop "min-width" ("40px" :: Text))
+      . WView.hover (WView.bg ("000" :: Hyperbole.HexColor) . WView.color ("FFF" :: Hyperbole.HexColor))
 
 pageContainer :: Hyperbole.View c () -> Hyperbole.View c ()
 pageContainer page = do
