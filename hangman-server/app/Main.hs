@@ -1,3 +1,4 @@
+{-# LANGUAGE FlexibleContexts #-}
 module Main (main) where
 
 import           Hangman.Adapters.InMemory (runConstPuzzleGen,
@@ -36,6 +37,4 @@ main = do
     createApp = do
        ioRef <- newIORef empty
        return $ application $ runEffectful ioRef
-    runEffectful ioRef eff = do
-      res <- liftIO . runEff . runErrorNoCallStack . runConstPuzzleGen (fromList "PUZZLE") . runGameEffectInMem ioRef. runGameReadEffectInMem ioRef $ eff
-      E.liftEither res
+    runEffectful ioRef = runConstPuzzleGen (fromList "PUZZLE") . runGameReadEffectInMem ioRef . runGameEffectInMem ioRef

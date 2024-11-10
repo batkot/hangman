@@ -89,7 +89,6 @@ api :: GameEffect :> es
     => GameReadEffect :> es
     => PuzzleGeneratorEffect :> es
     => Error ServerError :> es
-    => IOE :> es
     => ServerT Api (Eff es)
 api = createGameHandler :<|> getGameHandler :<|> guessLetterHandler
 
@@ -117,15 +116,13 @@ createGameHandler
     :: GameEffect :> es
     => GameReadEffect :> es
     => PuzzleGeneratorEffect :> es
-    => IOE :> es
     => CreateGameRequest
     -> Eff es GameDescriptionResponse
 createGameHandler (CreateGameRequest puzzle) = do
     let chances = foldr ($) PositiveInt.one $ replicate 9 PositiveInt.increment
-    newGameId <- liftIO $ GameId <$> UUID.nextRandom
-    let createRandomGame = CreateGame.createRandomGame newGameId chances
-        createNewGame = CreateGame.createGame newGameId chances
-    maybe createRandomGame createNewGame $ NonEmpty.nonEmpty . unpack $ puzzle
+    let createRandomGame = CreateGame.createRandomGame chances
+        createNewGame = CreateGame.createGame chances
+    newGameId <- maybe createRandomGame createNewGame $ NonEmpty.nonEmpty . unpack $ puzzle
     maybeGameDescription <- getGameDescription newGameId
     return $ fromJust maybeGameDescription
 

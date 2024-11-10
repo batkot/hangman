@@ -25,6 +25,7 @@ import           Data.Either.Extra          (eitherToMaybe, maybeToEither)
 import           Data.HashMap.Strict        as HM
 import           Data.IORef
 import           Data.UUID                  (UUID, toString)
+import qualified Data.UUID.V4               as UUID
 import           Effectful
 import           Effectful.Dispatch.Dynamic (interpret)
 import           Hangman.Application.Ports  (GameEffect (..),
@@ -45,6 +46,7 @@ runGameEffectInMem
   -> Eff (GameEffect : es) a
   -> Eff es a
 runGameEffectInMem gameStore = interpret $ \_ -> \case
+  NextId -> liftIO $ GameId <$> UUID.nextRandom
   FindGame gameId -> do
     gameMap <- liftIO $ readIORef gameStore
     let rawGameId :: UUID

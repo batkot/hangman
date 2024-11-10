@@ -9,22 +9,21 @@ module Hangman.Application.CreateGame
 
 import           Effectful                 (Eff, (:>))
 import           Hangman.Application.Ports (GameEffect, PuzzleGeneratorEffect,
-                                            nextPuzzle, saveGame)
+                                            nextId, nextPuzzle, saveGame)
 import           Hangman.Model.Game        (Chances, GameId, createNewGame)
 import           Hangman.Model.Puzzle      (Solution)
 import           Hangman.Named             (name)
 
-createGame :: (GameEffect :> es) => GameId -> Chances -> Solution -> Eff es ()
-createGame gameId chances solution =
-    name gameId $ \namedGameId ->
+createGame :: (GameEffect :> es) => Chances -> Solution -> Eff es GameId
+createGame chances solution = do
+    gameId <- nextId
+    name gameId $ \namedGameId -> do
         saveGame namedGameId $ createNewGame solution chances
+        pure gameId
 
 createRandomGame
     :: PuzzleGeneratorEffect :> es
     => GameEffect :> es
-    => GameId
-    -> Chances
-    -> Eff es ()
-createRandomGame gameId chances = do
-    solution <- nextPuzzle
-    createGame gameId chances solution
+    => Chances
+    -> Eff es GameId
+createRandomGame chances = nextPuzzle >>= createGame chances

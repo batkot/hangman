@@ -29,7 +29,6 @@ api
     :: GameEffect :> es
     => GameReadEffect :> es
     => PuzzleGeneratorEffect :> es
-    => IOE :> es
     => Error ServerError :> es
     => ServerT ApiSwag (Eff es)
 api = swaggerSchemaUIServerT (toSwagger @Api Proxy) :<|> Games.api

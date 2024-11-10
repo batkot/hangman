@@ -10,11 +10,13 @@ module Hangman.Server
     ) where
 
 import           Data.Proxy                (Proxy (..))
-import           Servant                   (Handler, ServerError, hoistServer,
-                                            serve, (:<|>) (..))
+import           Servant                   (ServerError, hoistServer, serve,
+                                            (:<|>) (..))
 import           Servant.Server            (Application, ServerT)
 
-import           Effectful                 (Eff, IOE, (:>))
+import qualified Control.Monad.Except      as E
+import           Control.Monad.IO.Class    (liftIO)
+import           Effectful                 (Eff, IOE, runEff, (:>))
 import           Effectful.Error.Dynamic
 import           Hangman.Application.Ports (GameEffect, PuzzleGeneratorEffect)
 import           Hangman.Read.Game         (GameReadEffect)
@@ -23,24 +25,21 @@ import qualified Hangman.Server.UI         as UI
 
 type HangmanApi = API.ApiSwag :<|> UI.UI
 
+type RunEff = forall es x. IOE :> es => Eff (GameEffect : GameReadEffect : PuzzleGeneratorEffect : es) x -> Eff es x
+
 server
     :: GameEffect :> es
     => GameReadEffect :> es
     => PuzzleGeneratorEffect :> es
-    => IOE :> es
     => Error ServerError :> es
-    => ServerT HangmanApi (Eff es)
-server = API.api :<|> UI.ui
+    => RunEff
+    -> ServerT HangmanApi (Eff es)
+server runEffs = API.api :<|> UI.ui runEffs
 
-application
-    :: GameEffect :> es
-    => GameReadEffect :> es
-    => PuzzleGeneratorEffect :> es
-    => IOE :> es
-    => Error ServerError :> es
-    => (forall x. Eff es x -> Handler x)
-    -> Application
-application runMonadStack = serve api $ hoistServer api runMonadStack server
+application :: RunEff -> Application
+application runEffs = serve api $ hoistServer api runEffectful $ server runEffs
   where
     api = Proxy @HangmanApi
-
+    runEffectful eff = do
+      res <- liftIO . runEff . runErrorNoCallStack . runEffs $ eff
+      E.liftEither res
