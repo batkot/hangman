@@ -199,8 +199,8 @@ pageContainer page = do
     containerStyle =
       WView.addClass
         $ WView.cls "container"
-          & WView.prop "width" ("100vh" :: Text)
-          & WView.prop "height" ("100vh" :: Text)
+          & WView.prop "width" ("100vw" :: Text)
+          & WView.prop "min-height" ("100vh" :: Text)
     logoContainer =
       WView.addClass
         $ WView.cls "page"
