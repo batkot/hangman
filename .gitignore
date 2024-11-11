@@ -1,6 +1,7 @@
 .stack-work/
 *~
 .direnv
+.env
 .pre-commit-config.yaml
 dist-newstyle/
 environments/
