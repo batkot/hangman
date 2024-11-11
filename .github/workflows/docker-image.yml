@@ -4,6 +4,10 @@ on:
   push:
     branches: [ "master" ]
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -11,6 +15,27 @@ jobs:
     steps:
     - uses: actions/checkout@v4
     - name: Login to Registry
-      env: 
+      env:
         DOCKER_REGISTRY_HOST: ${{ secrets.DOCKER_REGISTRY_HOST }}
-      run: docker login https://$DOCKER_REGISTRY_HOST
+        DOCKER_REGISTRY_USER: ${{ secrets.DOCKER_REGISTRY_USER }}
+        DOCKER_REGISTRY_PSWD: ${{ secrets.DOCKER_REGISTRY_PSWD }}
+      run: |
+        (cat <<END
+        $DOCKER_REGISTRY_PSWD
+        END
+        ) | docker login https://$DOCKER_REGISTRY_HOST -u $DOCKER_REGISTRY_USER --password-stdin
+
+    - name: Build docker
+      env:
+        DOCKER_REGISTRY_HOST: ${{ secrets.DOCKER_REGISTRY_HOST }}
+      run: docker build -t $DOCKER_REGISTRY_HOST/hangman-server:$GITHUB_SHA -f DOCKERFILE . --platform linux/amd64
+
+    - name: Push to Registry
+      env:
+        DOCKER_REGISTRY_HOST: ${{ secrets.DOCKER_REGISTRY_HOST }}
+      run: docker push $DOCKER_REGISTRY_HOST/hangman-server:$GITHUB_SHA
+
+    - name: Logout
+      env:
+        DOCKER_REGISTRY_HOST: ${{ secrets.DOCKER_REGISTRY_HOST }}
+      run: docker logout https://$DOCKER_REGISTRY_HOST
