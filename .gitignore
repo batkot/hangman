@@ -5,4 +5,4 @@
 dist-newstyle/
 environments/
 result
-server-image
+.docker-local/

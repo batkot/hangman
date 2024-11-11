@@ -23,7 +23,9 @@ run: build
     cabal exec hangman-server-exe -- -p 8081
 
 build-image:
-    nix build ".#hangman.server-docker" -o {{ docker-image }}
+    # nix build ".#hangman.server-docker" -o {{ docker-image }}
+    DOCKER_HOST= docker build -t hangman-server:{{ revision }} -f DOCKERFILE . --platform linux/amd64
+    DOCKER_HOST= docker save hangman-server:{{ revision }} > {{ docker-image }}
 
 release: build-image
     @echo "Deploying {{ revision }} to: {{ env('DOCKER_HOST', 'local') }}"

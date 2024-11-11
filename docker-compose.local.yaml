@@ -1,4 +1,4 @@
 services:
     hangman-api:
         ports:
-            - "5000:8080"
+            - "80:8080"
