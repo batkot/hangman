@@ -1,4 +1,4 @@
 services:
     hangman-api:
-        image: hangman-server:latest
+        image: hangman-server:0e53f4f1af4555d361805deb50b1d2f9ea96fbe6
         hostname: hangman-api

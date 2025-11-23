@@ -17,7 +17,7 @@ hpack:
     find -iname package.yaml -exec hpack {} \;
 
 build: hpack
-    cabal build all
+    cabal build all --enable-tests
 
 run: build
     cabal exec hangman-server-exe -- -p 8081
